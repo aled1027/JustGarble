@@ -437,22 +437,24 @@ createInputLabels(block *inputLabels, int n)
 	return 0;
 }
 
-int findGatesWithMatchingInputs(GarbledCircuit *garbledCircuit,
-		InputLabels inputLabels, OutputMap outputMap, int *outputs) {
-	int i;
+int
+findGatesWithMatchingInputs(GarbledCircuit *garbledCircuit,
+                            InputLabels inputLabels, OutputMap outputMap,
+                            int *outputs)
+{
 	GarbledGate *garbledGate1, *garbledGate2;
 	DKCipherContext dkCipherContext;
+	int matching = 0;
 
 	DKCipherInit(&(garbledCircuit->globalKey), &dkCipherContext);
 
-	for (i = 0; i < garbledCircuit->n; i++) {
+	for (int i = 0; i < garbledCircuit->n; i++) {
 		garbledCircuit->wires[i].label = inputLabels[i];
 	}
-	int matching = 0;
-	int j;
-	for (i = 0; i < garbledCircuit->q; i++) {
+
+	for (int i = 0; i < garbledCircuit->q; i++) {
 		garbledGate1 = &garbledCircuit->garbledGates[i];
-		for (j = i + 1; j < garbledCircuit->q; j++) {
+		for (int j = i + 1; j < garbledCircuit->q; j++) {
 			garbledGate2 = &garbledCircuit->garbledGates[j];
 			if (garbledGate1->input0 == garbledGate2->input0
 					&& garbledGate1->input1 == garbledGate2->input1) {
@@ -462,4 +464,3 @@ int findGatesWithMatchingInputs(GarbledCircuit *garbledCircuit,
 	}
 	return 0;
 }
-
