@@ -54,37 +54,44 @@ int AESSBOXTABLE[] = { 0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30,
 		0x55, 0x28, 0xdf, 0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41,
 		0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16 };
 
-int AddRoundKey(GarbledCircuit *gc, GarblingContext *garblingContext,
-		int* inputs, int* outputs) {
+int
+AddRoundKey(GarbledCircuit *gc, GarblingContext *garblingContext,
+            int* inputs, int* outputs)
+{
 	return XORCircuit(gc, garblingContext, 256, inputs, outputs);
 }
 
-int SubBytes(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
-		int* outputs) {
+int
+SubBytes(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
+         int* outputs)
+{
 	return NewSBOXCircuit(gc, garblingContext, inputs, outputs);
 }
 
-int ShiftRows(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
-		int* outputs) {
-	int i, j;
+int
+ShiftRows(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
+          int* outputs)
+{
 	int shiftTable[] = { 0, 5, 10, 15, 4, 9, 14, 3, 8, 13, 2, 7, 12, 1, 6, 11 };
-	for (i = 0; i < 16; i++) {
-		for (j = 0; j < 8; j++)
+	for (int i = 0; i < 16; i++) {
+		for (int j = 0; j < 8; j++)
 			outputs[8 * i + j] = inputs[shiftTable[i] * 8 + j];
 	}
 	return 0;
 }
 
-int MixColumns(GarbledCircuit *gc, GarblingContext *garblingContext,
-		int* inputs, int* outputs) {
+int
+MixColumns(GarbledCircuit *gc, GarblingContext *garblingContext,
+           int* inputs, int* outputs)
+{
 	int mulOut[4][8];
-	unsigned i, j;
+	unsigned j;
 	int inp[4][40];
 
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 		GF8MULCircuit(gc, garblingContext, 8, inputs + 8 * i, mulOut[i]);
 
-	for (i = 0; i < 4; i++) {
+	for (int i = 0; i < 4; i++) {
 		for (j = 0; j < 8; j++)
 			inp[i][j] = mulOut[i][j];
 		for (j = 0; j < 8; j++)
@@ -97,15 +104,16 @@ int MixColumns(GarbledCircuit *gc, GarblingContext *garblingContext,
 			inp[i][32 + j] = inputs[((i + 3) % 4) * 8 + j];
 	}
 
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 		MultiXORCircuit(gc, garblingContext, 5, 40, inp[i], outputs + 8 * i);
 
 	return 0;
 }
 
-int MAP(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
-		int* outputs) {
-
+int
+MAP(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
+    int* outputs)
+{
 	unsigned char A = 0;
 	unsigned char B = 1;
 	unsigned char C = 2;
@@ -152,11 +160,12 @@ int MAP(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
 	outputs[6] = tempW[H2];
 	outputs[7] = tempW[B];
 	return 0;
-
 }
 
-int INVMAP(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
-		int* outputs) {
+int
+INVMAP(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
+       int* outputs)
+{
 	unsigned char A = 0;
 	unsigned char B = 1;
 	unsigned char a0 = 2;
@@ -231,9 +240,10 @@ int INVMAP(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
 
 }
 
-int MULTGF16(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
-		int* outputs) {
-
+int
+MULTGF16(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
+         int* outputs)
+{
 	unsigned char A = 0;
 	unsigned char B = 1;
 	unsigned char C = 2;
@@ -353,9 +363,10 @@ int MULTGF16(GarbledCircuit *gc, GarblingContext *garblingContext, int* inputs,
 
 }
 
-int SquareCircuit(GarbledCircuit *garbledCircuit,
-		GarblingContext *garblingContext, int n, int* inputs, int* outputs) {
-
+int
+SquareCircuit(GarbledCircuit *garbledCircuit,
+              GarblingContext *garblingContext, int n, int* inputs, int* outputs)
+{
 	outputs[0] = getNextWire(garblingContext);
 	XORGate(garbledCircuit, garblingContext, inputs[0], inputs[2], outputs[0]);
 
@@ -365,16 +376,12 @@ int SquareCircuit(GarbledCircuit *garbledCircuit,
 
 	outputs[3] = inputs[3];
 	return 0;
-
 }
 
-int MULTE_GF16(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
-		int* inputs, int* outputs) {
-	int A = 0;
-	int B = 1;
-	int q0 = 2;
-	int q2 = 3;
-	int q3 = 4;
+int
+MULTE_GF16(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
+           int* inputs, int* outputs)
+{
 	int outputA = getNextWire(garblingContext);
 	int outputB = getNextWire(garblingContext);
 	int outputq0 = getNextWire(garblingContext);
@@ -399,24 +406,10 @@ int MULTE_GF16(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 
 }
 
-int INV_GF16(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
-		int* inputs, int* outputs) {
-	int A = 0;
-	int q0 = 1;
-	int q1 = 2;
-	int q2 = 3;
-	int q3 = 4;
-	int and01 = 5;
-	int and02 = 6;
-	int and03 = 7;
-	int and12 = 8;
-	int and13 = 9;
-	int and23 = 10;
-	int and012 = 11;
-	int and123 = 12;
-	int and023 = 13;
-	int and013 = 14;
-
+int
+INV_GF16(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
+         int* inputs, int* outputs)
+{
 	int AOutput = getNextWire(garblingContext);
 	int q0Output = getNextWire(garblingContext);
 	int q1Output = getNextWire(garblingContext);
@@ -481,7 +474,7 @@ int INV_GF16(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 	int tempXORq12 = getNextWire(garblingContext);
 	int tempXORq13 = getNextWire(garblingContext);
 	int tempXORq14 = getNextWire(garblingContext);
-	int tempXORq15 = getNextWire(garblingContext);
+	/* int tempXORq15 = */ getNextWire(garblingContext);
 
 	XORGate(garbledCircuit, garblingContext, and01Output, and02Output,
 			tempXORq11);
@@ -497,7 +490,7 @@ int INV_GF16(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 	int tempXORq22 = getNextWire(garblingContext);
 	int tempXORq23 = getNextWire(garblingContext);
 	int tempXORq24 = getNextWire(garblingContext);
-	int tempXORq25 = getNextWire(garblingContext);
+	/* int tempXORq25 = */ getNextWire(garblingContext);
 
 	XORGate(garbledCircuit, garblingContext, and01Output, inputs[2],
 			tempXORq21);
@@ -511,9 +504,9 @@ int INV_GF16(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 
 	int tempXORq31 = getNextWire(garblingContext);
 	int tempXORq32 = getNextWire(garblingContext);
-	int tempXORq33 = getNextWire(garblingContext);
-	int tempXORq34 = getNextWire(garblingContext);
-	int tempXORq35 = getNextWire(garblingContext);
+	/* int tempXORq33 = */ getNextWire(garblingContext);
+	/* int tempXORq34 = */ getNextWire(garblingContext);
+	/* int tempXORq35 = */ getNextWire(garblingContext);
 
 	XORGate(garbledCircuit, garblingContext, AOutput, and03Output, tempXORq31);
 	XORGate(garbledCircuit, garblingContext, and13Output, tempXORq31,
@@ -526,28 +519,12 @@ int INV_GF16(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 	outputs[3] = q3Output;
 
 	return 0;
-
 }
 
-int AFFINE(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
-		int* inputs, int* outputs) {
-	int A = 0;
-	int B = 1;
-	int C = 2;
-	int D = 3;
-	int q0 = 4;
-	int q1 = 5;
-	int q2 = 6;
-	int q3 = 7;
-	int q4 = 8;
-	int q5 = 9;
-	int q6 = 10;
-	int q7 = 11;
-	int a0bar = 12;
-	int a1bar = 13;
-	int a5bar = 14;
-	int a6bar = 15;
-
+int
+AFFINE(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
+       int* inputs, int* outputs)
+{
 	int AOutput = getNextWire(garblingContext);
 	int BOutput = getNextWire(garblingContext);
 	int COutput = getNextWire(garblingContext);
@@ -625,24 +602,12 @@ int AFFINE(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 	outputs[7] = q7Output;
 
 	return 0;
-
 }
 
-int INV_GF256(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
-		int* inputs, int* outputs) {
-	int Map = 0;
-	int InvMap = 1;
-	int Square0 = 2;
-	int Square1 = 3;
-	int Mult0 = 4;
-	int Mult1 = 5;
-	int Mult2 = 6;
-	int XOR0 = 7;
-	int XOR1 = 8;
-	int XOR2 = 9;
-	int MultE = 10;
-	int Invt = 11;
-
+int
+INV_GF256(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
+          int* inputs, int* outputs)
+{
 	int i;
 	int square0Inputs[8];
 	int square0Outputs[8];
@@ -746,20 +711,18 @@ int INV_GF256(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 		outputs[i] = InvMapOutputs[i];
 	}
 	return 0;
-
 }
 
-int SBOXNOTABLE(GarbledCircuit *garbledCircuit,
-		GarblingContext *garblingContext, int* inputs, int* outputs) {
-
+int
+SBOXNOTABLE(GarbledCircuit *garbledCircuit,
+            GarblingContext *garblingContext, int* inputs, int* outputs)
+{
 	int invInputs[8];
 	int invOutputs[8];
-	int i;
-	for (i = 0; i < 8; i++)
+	for (int i = 0; i < 8; i++)
 		invInputs[i] = inputs[i];
 	INV_GF256(garbledCircuit, garblingContext, invInputs, invOutputs);
 	AFFINE(garbledCircuit, garblingContext, invOutputs, outputs);
 	return 0;
-
 }
 

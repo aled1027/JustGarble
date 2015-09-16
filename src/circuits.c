@@ -258,7 +258,7 @@ int GF4SQCircuit(GarbledCircuit *gc, GarblingContext *garblingContext,
 
 int NewSBOXCircuit(GarbledCircuit *gc, GarblingContext *garblingContext,
 		int* inputs, int* outputs) {
-	int temp1[8], temp2[8], temp3[8];
+	int temp1[8], temp2[8];
 	EncoderCircuit(gc, garblingContext, inputs, temp1, A2X1);
 	GF256InvCircuit(gc, garblingContext, temp1, temp2);
 	EncoderOneCircuit(gc, garblingContext, temp2, outputs, S2X1);

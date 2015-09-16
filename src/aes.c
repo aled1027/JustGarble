@@ -163,7 +163,7 @@ void AES_ecb_encrypt_blks(block *blks, unsigned nblks, AES_KEY *key) {
 }
 
 void AES_ecb_encrypt_blks_4(block *blks, AES_KEY *key) {
-	unsigned i, j, rnds = ROUNDS(key);
+	unsigned j, rnds = ROUNDS(key);
 	const __m128i *sched = ((__m128i *) (key->rd_key));
 	blks[0] = _mm_xor_si128(blks[0], sched[0]);
 	blks[1] = _mm_xor_si128(blks[1], sched[0]);

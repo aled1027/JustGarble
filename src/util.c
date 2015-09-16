@@ -24,28 +24,33 @@
 
 static __m128i cur_seed;
 
-int countToN(int *a, int n) {
-	int i;
-	for (i = 0; i < n; i++)
+int
+countToN(int *a, int n)
+{
+	for (int i = 0; i < n; i++)
 		a[i] = i;
 	return 0;
 }
 
-int dbgBlock(block a) {
+int
+dbgBlock(block a)
+{
 	int *A = (int *) &a;
-	int i;
 	int out = 0;
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 		out = out + (A[i] + 13432) * 23517;
 	return out;
 }
 
-int compare(const void * a, const void * b) {
+int
+compare(const void * a, const void * b)
+{
 	return (*(int*) a - *(int*) b);
 }
 
-int median(int *values, int n) {
-	int i;
+int
+median(int *values, int n)
+{
 	qsort(values, n, sizeof(int), compare);
 	if (n % 2 == 1)
 		return values[(n + 1) / 2];
@@ -53,15 +58,18 @@ int median(int *values, int n) {
 		return (values[n / 2] + values[n / 2 + 1]) / 2;
 }
 
-double doubleMean(double *values, int n) {
-	int i;
+double
+doubleMean(double *values, int n)
+{
 	double total = 0;
-	for (i = 0; i < n; i++)
+	for (int i = 0; i < n; i++)
 		total += values[i];
 	return total / n;
 }
 
-void srand_sse(unsigned int seed) {
+void
+srand_sse(unsigned int seed)
+{
 	cur_seed = _mm_set_epi32(seed, seed + 1, seed, seed + 1);
 }
 

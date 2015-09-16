@@ -32,13 +32,6 @@
 
 int FINAL_ROUND = 0;
 
-static void
-print_block(block blk)
-{
-    uint64_t *val = (uint64_t *) &blk;
-    printf("%016lx%016lx", val[1], val[0]);
-}
-
 int
 createNewWire(Wire *in, GarblingContext *garblingContext, int id)
 {

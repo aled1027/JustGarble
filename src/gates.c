@@ -105,13 +105,13 @@ int NOTGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 			NOTGATE);
 }
 
-#ifdef ROW_REDUCTION
-
-int genericGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext, int input0, int input1, int output, int *vals, int type) {
+int
+genericGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
+            int input0, int input1, int output, int *vals, int type)
+{
 	createNewWire(&(garbledCircuit->wires[output]), garblingContext, output);
 
 	GarbledGate *garbledGate = &(garbledCircuit->garbledGates[garblingContext->gateIndex]);
-	GarbledTable *garbledTable = &(garbledCircuit->garbledTable[garblingContext->tableIndex]);
 
 	garbledGate->id = garblingContext->gateIndex;
 	garbledGate->type = type;
@@ -119,12 +119,7 @@ int genericGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext
 	garbledGate->input1 = input1;
 	garbledGate->output = output;
 
-	block blocks[4];
-	block keys[4];
-	long lsb0 = getLSB(garbledCircuit->wires[input0].label0);
-	long lsb1 = getLSB(garbledCircuit->wires[input1].label0);
 	block tweak;
-	block keyToEncrypt;
 
 	tweak = makeBlock(garblingContext->gateIndex, (long)0);
 	garblingContext->gateIndex++;
@@ -132,24 +127,3 @@ int genericGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext
 
 	return garbledGate->id;
 }
-#else
-
-int genericGate(GarbledCircuit *garbledCircuit,
-		GarblingContext *garblingContext, int input0, int input1, int output,
-		int *vals, int type) {
-	createNewWire(&(garbledCircuit->wires[output]), garblingContext, output);
-	GarbledGate *garbledGate =
-			&(garbledCircuit->garbledGates[garblingContext->gateIndex]);
-
-	garbledGate->id = garblingContext->gateIndex;
-	garbledGate->type = type;
-	garbledGate->input0 = input0;
-	garbledGate->input1 = input1;
-	garbledGate->output = output;
-
-	garblingContext->gateIndex++;
-	garblingContext->tableIndex++;
-	return garbledGate->id;
-}
-
-#endif
