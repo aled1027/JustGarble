@@ -117,6 +117,7 @@ int createEmptyGarbledCircuit(GarbledCircuit *garbledCircuit, int n, int m,
 
 //Create memory for 2*n input labels.
 int createInputLabels(InputLabels inputLabels, int n);
+int createInputLabelsWithR(InputLabels inputLabels, int n, block* R);
 
 //Garble the circuit described in garbledCircuit. For efficiency reasons,
 //we use the garbledCircuit data-structure for representing the input 

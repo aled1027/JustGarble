@@ -169,6 +169,7 @@ garbleCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
               block *outputMap)
 {
 	GarblingContext garblingContext;
+
 	GarbledGate *garbledGate;
 	GarbledTable *garbledTable;
 	block tweak;
@@ -177,11 +178,12 @@ garbleCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
 	long lsb0,lsb1;
 	int input0, input1, output;
 
-	srand_sse(time(NULL));
-
 	startTime = RDTSC;
 
-	createInputLabels(inputLabels, garbledCircuit->n);
+    garblingContext.R = xorBlocks(garbledCircuit->wires[0].label0, garbledCircuit->wires[0].label1);
+
+	//garblingbontext.R = *R;
+	createInputLabelsWithR(inputLabels, garbledCircuit->n, &garblingContext.R);
 
 	garbledCircuit->id = getFreshId();
 
@@ -194,7 +196,6 @@ garbleCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
 	garblingContext.gateIndex = 0;
 	garblingContext.wireIndex = garbledCircuit->n + 1;
 	block key = randomBlock();
-	garblingContext.R = xorBlocks(garbledCircuit->wires[0].label0, garbledCircuit->wires[0].label1);
 	garbledCircuit->globalKey = key;
 	DKCipherInit(&key, &(garblingContext.dkCipherContext));
 	int tableIndex = 0;
@@ -384,11 +385,23 @@ mapOutputs(OutputMap outputMap, OutputMap outputMap2, int *vals, int m)
 }
 
 int
+createInputLabelsWithR(block *inputLabels, int n, block* R)
+{
+	for (int i = 0; i < 2 * n; i += 2) {
+		inputLabels[i] = randomBlock();
+		inputLabels[i + 1] = xorBlocks(*R, inputLabels[i]);
+	}
+	return 0;
+}
+
+
+int
 createInputLabels(block *inputLabels, int n)
 {
 	int i;
-	block R = randomBlock();
-	*((uint16_t *) (&R)) |= 1;
+    block R = randomBlock();
+    *((uint16_t *) (&R)) |= 1;
+
 
 	for (i = 0; i < 2 * n; i += 2) {
 		inputLabels[i] = randomBlock();
