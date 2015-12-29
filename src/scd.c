@@ -106,12 +106,14 @@ int readCircuitFromFile(GarbledCircuit *garbledCircuit, char *fileName) {
 	garbledCircuit->q = q;
 	garbledCircuit->r = n+q+2;
 
-	garbledCircuit->outputs = (int *) memalign(128, sizeof(int) * m);
-	garbledCircuit->garbledGates = (GarbledGate *) memalign(128,
-			sizeof(GarbledGate) * q);
-	garbledCircuit->garbledTable = (GarbledTable *) memalign(128,
-			sizeof(GarbledTable) * q);
-	garbledCircuit->wires = (Wire *) malloc(sizeof(Wire) * garbledCircuit->r);
+    (void) posix_memalign((void **) &garbledCircuit->outputs,
+                          128, sizeof(int) * m);
+    (void) posix_memalign((void **) &garbledCircuit->garbledGates,
+                          128, sizeof(GarbledGate) * q);
+    (void) posix_memalign((void **) &garbledCircuit->garbledTable,
+                          128, sizeof(GarbledTable) * q);
+    (void) posix_memalign((void **) &garbledCircuit->wires,
+                          128, sizeof(Wire) * garbledCircuit->r);
 	if (garbledCircuit->garbledGates == NULL
 			|| garbledCircuit->garbledTable == NULL
 			|| garbledCircuit->wires == NULL) {

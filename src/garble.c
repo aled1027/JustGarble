@@ -69,10 +69,10 @@ createEmptyGarbledCircuit(GarbledCircuit *gc, int n, int m,
 {
 	startTime = RDTSC;
 	gc->id = getNextId();
-	gc->garbledGates = (GarbledGate *) memalign(128, sizeof(GarbledGate) * q);
-	gc->garbledTable = (GarbledTable *) memalign(128, sizeof(GarbledTable) * q);
-	gc->wires = (Wire *) memalign(128, sizeof(Wire) * r);
-	gc->outputs = (int *) memalign(128, sizeof(int) * m);
+    (void) posix_memalign((void **) &gc->garbledGates, 128, sizeof(GarbledGate) * q);
+    (void) posix_memalign((void **) &gc->garbledTable, 128, sizeof(GarbledTable) * q);
+    (void) posix_memalign((void **) &gc->wires, 128, sizeof(Wire) * r);
+    (void) posix_memalign((void **) &gc->outputs, 128, sizeof(int) * m);
 
 	if (gc->garbledGates == NULL || gc->garbledTable == NULL
         || gc->wires == NULL || gc->outputs == NULL) {
