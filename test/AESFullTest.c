@@ -35,10 +35,10 @@ buildAESCircuit(GarbledCircuit *gc)
     srand_sse(time(NULL));
 	GarblingContext garblingContext;
 
-	int roundLimit = 1;
+	int roundLimit = 10;
 	int n = 128 * (roundLimit + 1);
 	int m = 128;
-	int q = 50000; //Just an upper bound
+	int q = 36000; //Just an upper bound
 	int r = 50000;
 	int inp[n];
 	countToN(inp, n);
@@ -61,19 +61,17 @@ buildAESCircuit(GarbledCircuit *gc)
 
 	for (int round = 0; round < roundLimit; round++) {
 
-		AddRoundKey(gc, &garblingContext, addKeyInputs,
-                    addKeyOutputs);
+		AddRoundKey(gc, &garblingContext, addKeyInputs, addKeyOutputs);
 
 		for (i = 0; i < 16; i++) {
 			SubBytes(gc, &garblingContext, addKeyOutputs + 8 * i,
                      subBytesOutputs + 8 * i);
 		}
 
-		ShiftRows(gc, &garblingContext, subBytesOutputs,
-                  shiftRowsOutputs);
+		ShiftRows(gc, &garblingContext, subBytesOutputs, shiftRowsOutputs);
 
 		for (i = 0; i < 4; i++) {
-			if (round == roundLimit - 1)
+			if (round != roundLimit - 1)
 				MixColumns(gc, &garblingContext,
                            shiftRowsOutputs + i * 32, mixColumnOutputs + 32 * i);
 		}
@@ -122,18 +120,18 @@ main(int argc, char *argv[])
         mapOutputs(outputMap, computedOutputMap, outputVals, m);
     }
 
-	/* for (j = 0; j < TIMES; j++) { */
-	/* 	for (i = 0; i < TIMES; i++) { */
-	/* 		timeGarble[i] = garbleCircuit(&aesCircuit, inputLabels, outputMap); */
-	/* 		timeEval[i] = timedEval(&aesCircuit, inputLabels); */
-	/* 	} */
-	/* 	timeGarbleMedians[j] = ((double) median(timeGarble, TIMES)) */
-    /*         / aesCircuit.q; */
-	/* 	timeEvalMedians[j] = ((double) median(timeEval, TIMES)) / aesCircuit.q; */
-	/* } */
-	/* double garblingTime = doubleMean(timeGarbleMedians, TIMES); */
-	/* double evalTime = doubleMean(timeEvalMedians, TIMES); */
-	/* printf("%lf %lf\n", garblingTime, evalTime); */
+	for (j = 0; j < TIMES; j++) {
+		for (i = 0; i < TIMES; i++) {
+			timeGarble[i] = garbleCircuit(&aesCircuit, inputLabels, outputMap);
+			timeEval[i] = timedEval(&aesCircuit, inputLabels);
+		}
+		timeGarbleMedians[j] = ((double) median(timeGarble, TIMES))
+            / aesCircuit.q;
+		timeEvalMedians[j] = ((double) median(timeEval, TIMES)) / aesCircuit.q;
+	}
+	double garblingTime = doubleMean(timeGarbleMedians, TIMES);
+	double evalTime = doubleMean(timeEvalMedians, TIMES);
+	printf("%lf %lf\n", garblingTime, evalTime);
 	return 0;
 }
 

@@ -16,13 +16,16 @@ IDIR =../include
 CC=gcc 
 CFLAGS= -g -lm -lrt -lpthread -maes -msse4 -lmsgpack -march=native -I$(IDIR)
 
-
+AND = ANDTest
 AES = AESFullTest
 LARGE = LargeCircuitTest
 FILE = CircuitFileTest
 rm = rm --f
 
 all: AES LARGE FILE
+
+AND: $(OBJECTS) $(TESTDIR)/$(AND).c
+	$(CC) $(OBJECTFULL) $(TESTDIR)/$(AND).c -o $(BINDIR)/$(AND).out $(LIBS) $(CFLAGS) 
 
 AES: $(OBJECTS) $(TESTDIR)/$(AES).c
 	$(CC) $(OBJECTFULL) $(TESTDIR)/$(AES).c -o $(BINDIR)/$(AES).out $(LIBS) $(CFLAGS) 

@@ -715,16 +715,15 @@ int MultiXORCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int d,
 	return res;
 }
 
-int XORCircuit(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
-		int n, int* inputs, int* outputs) {
-	int i;
-	int internalWire;
-	int split = n / 2;
+int
+XORCircuit(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
+           int n, int* inputs, int* outputs)
+{
 	int res = 0;
-	for (i = 0; i < n / 2; i++) {
-		internalWire = getNextWire(garblingContext);
+	for (int i = 0; i < n / 2; i++) {
+		int internalWire = getNextWire(garblingContext);
 		res = XORGate(garbledCircuit, garblingContext, inputs[i],
-				inputs[split + i], internalWire);
+				inputs[n / 2 + i], internalWire);
 		outputs[i] = internalWire;
 	}
 	return res;

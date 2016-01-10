@@ -35,21 +35,23 @@ int FINAL_ROUND = 0;
 int
 createNewWire(Wire *in, GarblingContext *garblingContext, int id)
 {
-	in->id = id; //getNextWire(garblingContext);
+	in->id = id;
 	in->label0 = randomBlock();
 	in->label1 = xorBlocks(garblingContext->R, in->label0);
 	return 0;
 }
 
-static unsigned long currentId;
+static unsigned long currentId = 0;
+
 int
-getNextId()
+getNextId(void)
 {
 	currentId++;
 	return currentId;
 }
+
 int
-getFreshId()
+getFreshId(void)
 {
 	currentId = 0;
 	return currentId;
@@ -111,15 +113,13 @@ removeGarbledCircuit(GarbledCircuit *gc)
 int
 startBuilding(GarbledCircuit *gc, GarblingContext *gctxt)
 {
+    gctxt->wireIndex = gc->n; /* start at first non-input wire */
 	gctxt->gateIndex = 0;
 	gctxt->tableIndex = 0;
-	gctxt->wireIndex = gc->n + 1;
-	block key = randomBlock();
 	gctxt->R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
 	gctxt->fixedWires = (int *) malloc(sizeof(int) * gc->r);
-	gc->globalKey = key;
-	startTime = RDTSC;
-	DKCipherInit(&key, &(gctxt->dkCipherContext));
+	gc->globalKey = randomBlock();
+	DKCipherInit(&gc->globalKey, &gctxt->dkCipherContext);
 	return 0;
 }
 
@@ -177,12 +177,13 @@ garbleCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
 	block keys[4];
 	long lsb0,lsb1;
 	int input0, input1, output;
+    long startTime, endTime;
 
 	startTime = RDTSC;
 
-    garblingContext.R = xorBlocks(garbledCircuit->wires[0].label0, garbledCircuit->wires[0].label1);
+    garblingContext.R = xorBlocks(garbledCircuit->wires[0].label0,
+                                  garbledCircuit->wires[0].label1);
 
-	//garblingbontext.R = *R;
 	createInputLabelsWithR(inputLabels, garbledCircuit->n, &garblingContext.R);
 
 	garbledCircuit->id = getFreshId();
@@ -385,7 +386,7 @@ mapOutputs(OutputMap outputMap, OutputMap outputMap2, int *vals, int m)
 }
 
 int
-createInputLabelsWithR(block *inputLabels, int n, block* R)
+createInputLabelsWithR(block *inputLabels, int n, block *R)
 {
 	for (int i = 0; i < 2 * n; i += 2) {
 		inputLabels[i] = randomBlock();
@@ -398,16 +399,10 @@ createInputLabelsWithR(block *inputLabels, int n, block* R)
 int
 createInputLabels(block *inputLabels, int n)
 {
-	int i;
     block R = randomBlock();
     *((uint16_t *) (&R)) |= 1;
 
-
-	for (i = 0; i < 2 * n; i += 2) {
-		inputLabels[i] = randomBlock();
-		inputLabels[i + 1] = xorBlocks(R, inputLabels[i]);
-	}
-	return 0;
+    return createInputLabelsWithR(inputLabels, n, &R);
 }
 
 int
