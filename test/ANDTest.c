@@ -37,55 +37,78 @@ buildCircuit(GarbledCircuit *gc, int n, int nlayers)
 }
 
 void
-test(int n, int nlayers)
+test(int n, int nlayers, int times)
 {
     GarbledCircuit gc;
 
     block inputLabels[2 * n];
     block outputLabels[2 * n];
 
-    int timeGarble[TIMES];
-    int timeEval[TIMES];
-    double timeGarbleMedians[TIMES];
-    double timeEvalMedians[TIMES];
+    int timeGarble[times];
+    int timeEval[times];
+    double timeGarbleMedians[times];
+    double timeEvalMedians[times];
 
     srand(time(NULL));
     srand_sse(time(NULL));
 
     buildCircuit(&gc, n, nlayers);
+    (void) garbleCircuit(&gc, inputLabels, outputLabels);
+    {
+        block extractedLabels[n];
+        block computedOutputMap[n];
+        int inputs[n];
+        int outputs[n];
 
-    for (int i = 0; i < TIMES; ++i) {
-        for (int j = 0; j < TIMES; ++j) {
+        printf("Input:  ");
+        for (int i = 0; i < n; ++i) {
+            inputs[i] = rand() % 2;
+            printf("%d", inputs[i]);
+        }
+        printf("\n");
+        extractLabels(extractedLabels, inputLabels, inputs, n);
+        evaluate(&gc, extractedLabels, computedOutputMap);
+        mapOutputs(outputLabels, computedOutputMap, outputs, n);
+        printf("Output: ");
+        for (int i = 0; i < n; ++i) {
+            printf("%d", outputs[i]);
+        }
+        printf("\n");
+    }
+
+    for (int i = 0; i < times; ++i) {
+        for (int j = 0; j < times; ++j) {
             timeGarble[j] = garbleCircuit(&gc, inputLabels, outputLabels);
             timeEval[j] = timedEval(&gc, inputLabels);
         }
-        timeGarbleMedians[i] = ((double) median(timeGarble, TIMES)) / gc.q;
-        timeEvalMedians[i] = ((double) median(timeEval, TIMES)) / gc.q;
+        timeGarbleMedians[i] = ((double) median(timeGarble, times)) / gc.q;
+        timeEvalMedians[i] = ((double) median(timeEval, times)) / gc.q;
     }
     printf("%lf %lf\n",
-           doubleMean(timeGarbleMedians, TIMES),
-           doubleMean(timeEvalMedians, TIMES));
+           doubleMean(timeGarbleMedians, times),
+           doubleMean(timeEvalMedians, times));
 }
 
 int
 main(int argc, char *argv[])
 {
-    int ninputs, nlayers;
+    int ninputs, nlayers, ntimes;
 
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s <ninputs> <nlayers>\n", argv[0]);
+    if (argc != 4) {
+        fprintf(stderr, "Usage: %s <ninputs> <nlayers> <ntimes>\n", argv[0]);
         exit(1);
     }
 
     ninputs = atoi(argv[1]);
     nlayers = atoi(argv[2]);
+    ntimes = atoi(argv[3]);
 
     if (ninputs % 2 != 0) {
         fprintf(stderr, "Error: ninputs must be even\n");
         exit(1);
     }
 
-    test(ninputs, nlayers);
+    test(ninputs, nlayers, ntimes);
 
     return 0;
 }
