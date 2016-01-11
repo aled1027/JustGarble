@@ -172,10 +172,6 @@ garbleCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
 	GarblingContext garblingContext;
 
 	GarbledTable *garbledTable;
-	block tweak;
-	block blocks[4];
-	block keys[4];
-	long lsb0,lsb1;
     long startTime, endTime;
 
 	startTime = RDTSC;
@@ -203,6 +199,8 @@ garbleCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
 	for (long i = 0; i < garbledCircuit->q; i++) {
         GarbledGate *garbledGate;
         int input0, input1, output;
+        block tweak, blocks[4], keys[4];
+        long lsb0, lsb1;
 
         garbledGate = &(garbledCircuit->garbledGates[i]);
 		input0 = garbledGate->input0;
