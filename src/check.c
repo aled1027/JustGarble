@@ -24,9 +24,10 @@
 #include "../include/justGarble.h"
 
 
-int checkCircuit(GarbledCircuit *garbledCircuit, InputLabels inputLabels,
-		OutputMap outputMap, int check(int *a, int *out, int s)) {
-
+int
+checkCircuit(GarbledCircuit *garbledCircuit, InputLabels inputLabels,
+             OutputMap outputMap, int check(int *a, int *out, int s))
+{
 	int i, j;
 	int n = garbledCircuit->n;
 	int m = garbledCircuit->m;
@@ -52,8 +53,9 @@ int checkCircuit(GarbledCircuit *garbledCircuit, InputLabels inputLabels,
 	return 0;
 }
 
-unsigned long timedEval(GarbledCircuit *garbledCircuit, InputLabels inputLabels) {
-
+unsigned long
+timedEval(GarbledCircuit *garbledCircuit, InputLabels inputLabels)
+{
 	int n = garbledCircuit->n;
 	int m = garbledCircuit->m;
 	block extractedLabels[n];
@@ -71,6 +73,4 @@ unsigned long timedEval(GarbledCircuit *garbledCircuit, InputLabels inputLabels)
 	endTime = RDTSC;
 	sum = endTime - startTime;
 	return sum;
-
 }
-

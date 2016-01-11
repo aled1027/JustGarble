@@ -657,8 +657,10 @@ int ADD32Circuit(GarbledCircuit *garbledCircuit,
 	return 0;
 }
 
-int ADD22Circuit(GarbledCircuit *garbledCircuit,
-		GarblingContext *garblingContext, int* inputs, int* outputs) {
+int
+ADD22Circuit(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
+             int *inputs, int *outputs)
+{
 	int wire1 = getNextWire(garblingContext);
 	int wire2 = getNextWire(garblingContext);
 
@@ -669,46 +671,47 @@ int ADD22Circuit(GarbledCircuit *garbledCircuit,
 	return 0;
 }
 
-int ORCircuit(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
-		int n, int* inputs, int* outputs) {
-	int i;
+int
+ORCircuit(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
+          int n, int *inputs, int *outputs)
+{
 	int oldInternalWire = getNextWire(garblingContext);
-	int newInternalWire;
 	ORGate(garbledCircuit, garblingContext, inputs[0], inputs[1],
-			oldInternalWire);
-	for (i = 2; i < n - 1; i++) {
-		newInternalWire = getNextWire(garblingContext);
+           oldInternalWire);
+	for (int i = 2; i < n - 1; i++) {
+		int newInternalWire = getNextWire(garblingContext);
 		ORGate(garbledCircuit, garblingContext, inputs[i], oldInternalWire,
-				newInternalWire);
+               newInternalWire);
 		oldInternalWire = newInternalWire;
 	}
 	outputs[0] = getNextWire(garblingContext);
 	int res = ORGate(garbledCircuit, garblingContext, inputs[n - 1],
-			oldInternalWire, outputs[0]);
+                     oldInternalWire, outputs[0]);
 	return res;
 }
 
-int MultiXORCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int d,
-		int n, int* inputs, int* outputs) {
-	int i, j;
+int
+MultiXORCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int d,
+                int n, int *inputs, int *outputs)
+{
 	int div = n / d;
 
 	int tempInWires[n];
 	int tempOutWires[n];
 	int res = 0;
-	for (i = 0; i < div; i++) {
+	for (int i = 0; i < div; i++) {
 		tempOutWires[i] = inputs[i];
 	}
 
-	for (i = 1; i < d; i++) {
-		for (j = 0; j < div; j++) {
+	for (int i = 1; i < d; i++) {
+		for (int j = 0; j < div; j++) {
 			tempInWires[j] = tempOutWires[j];
 			tempInWires[div + j] = inputs[div * i + j];
 		}
 		res = XORCircuit(gc, garblingContext, 2 * div, tempInWires,
-				tempOutWires);
+                         tempOutWires);
 	}
-	for (i = 0; i < div; i++) {
+	for (int i = 0; i < div; i++) {
 		outputs[i] = tempOutWires[i];
 	}
 
@@ -731,9 +734,10 @@ XORCircuit(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 
 //http://edipermadi.files.wordpress.com/2008/02/aes_galois_field.jpg
 
-int GF8MULCircuit(GarbledCircuit *garbledCircuit,
-		GarblingContext *garblingContext, int n, int* inputs, int* outputs) {
-
+int
+GF8MULCircuit(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
+              int n, int* inputs, int* outputs)
+{
 	outputs[0] = inputs[7];
 	outputs[2] = inputs[1];
 	outputs[3] = getNextWire(garblingContext);

@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 #include "../include/justGarble.h"
 
 int checkfn(int *a, int *outputs, int n) {

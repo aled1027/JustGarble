@@ -28,8 +28,10 @@
 #include <malloc.h>
 #include <wmmintrin.h>
 
-int evaluate(GarbledCircuit *garbledCircuit, ExtractedLabels extractedLabels,
-		OutputMap outputMap) {
+int
+evaluate(GarbledCircuit *garbledCircuit, ExtractedLabels extractedLabels,
+         block *outputMap)
+{
 	GarbledGate *garbledGate;
 	DKCipherContext dkCipherContext;
 	DKCipherInit(&(garbledCircuit->globalKey), &dkCipherContext);
@@ -50,52 +52,42 @@ int evaluate(GarbledCircuit *garbledCircuit, ExtractedLabels extractedLabels,
 
 	for (i = 0; i < garbledCircuit->q; i++) {
 		garbledGate = &(garbledCircuit->garbledGates[i]);
-#ifdef FREE_XOR
 		if (garbledGate->type == XORGATE) {
 			garbledCircuit->wires[garbledGate->output].label =
-			xorBlocks(garbledCircuit->wires[garbledGate->input0].label,
-					garbledCircuit->wires[garbledGate->input1].label);
+                xorBlocks(garbledCircuit->wires[garbledGate->input0].label,
+                          garbledCircuit->wires[garbledGate->input1].label);
 		} else {
-#endif
-		A = DOUBLE(garbledCircuit->wires[garbledGate->input0].label);
-		B = DOUBLE(DOUBLE(garbledCircuit->wires[garbledGate->input1].label));
+            A = DOUBLE(garbledCircuit->wires[garbledGate->input0].label);
+            B = DOUBLE(DOUBLE(garbledCircuit->wires[garbledGate->input1].label));
 
-		plainText = &garbledCircuit->wires[garbledGate->output].label;
+            plainText = &garbledCircuit->wires[garbledGate->output].label;
 
-		a = getLSB(garbledCircuit->wires[garbledGate->input0].label);
-		b = getLSB(garbledCircuit->wires[garbledGate->input1].label);
-		block temp;
+            a = getLSB(garbledCircuit->wires[garbledGate->input0].label);
+            b = getLSB(garbledCircuit->wires[garbledGate->input1].label);
+            block temp;
 
-		val = xorBlocks(A, B);
-		tweak = makeBlock(i, (long) 0);
-		val = xorBlocks(val, tweak);
-#ifdef ROW_REDUCTION
-		if (a+b==0)
-		cipherText = &zer;
-		else
-		cipherText = &garbledTable[tableIndex].table[2*a+b-1];
-#else
-		cipherText = &garbledTable[tableIndex].table[2 * a + b];
-#endif
+            val = xorBlocks(A, B);
+            tweak = makeBlock(i, (long) 0);
+            val = xorBlocks(val, tweak);
+            if (a+b==0)
+                cipherText = &zer;
+            else
+                cipherText = &garbledTable[tableIndex].table[2*a+b-1];
 
-		temp = xorBlocks(val, *cipherText);
+            temp = xorBlocks(val, *cipherText);
 
-		val = _mm_xor_si128(val, sched[0]);
-		for (j = 1; j < rnds; j++)
-			val = _mm_aesenc_si128(val, sched[j]);
-		val = _mm_aesenclast_si128(val, sched[j]);
+            val = _mm_xor_si128(val, sched[0]);
+            for (j = 1; j < rnds; j++)
+                val = _mm_aesenc_si128(val, sched[j]);
+            val = _mm_aesenclast_si128(val, sched[j]);
 
-		*plainText = xorBlocks(val, temp);
-		tableIndex++;
-#ifdef FREE_XOR
-	}
-#endif
-
+            *plainText = xorBlocks(val, temp);
+            tableIndex++;
+        }
 	}
 
 	for (i = 0; i < garbledCircuit->m; i++) {
 		outputMap[i] = garbledCircuit->wires[garbledCircuit->outputs[i]].label;
 	}
 	return 0;
-
 }

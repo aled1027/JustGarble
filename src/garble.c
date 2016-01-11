@@ -207,8 +207,12 @@ garbleCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
 		output = garbledGate->output;
 
 		if (garbledGate->type == XORGATE) {
-			garbledCircuit->wires[output].label0 = xorBlocks(garbledCircuit->wires[input0].label0, garbledCircuit->wires[input1].label0);
-			garbledCircuit->wires[output].label1 = xorBlocks(garbledCircuit->wires[input0].label1, garbledCircuit->wires[input1].label0);
+			garbledCircuit->wires[output].label0
+                = xorBlocks(garbledCircuit->wires[input0].label0,
+                            garbledCircuit->wires[input1].label0);
+			garbledCircuit->wires[output].label1
+                = xorBlocks(garbledCircuit->wires[input0].label1,
+                            garbledCircuit->wires[input1].label0);
 			continue;
 		}
 		tweak = makeBlock(i, (long)0);
