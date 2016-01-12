@@ -21,7 +21,6 @@
 #include "../include/circuits.h"
 #include "../include/gates.h"
 #include "../include/util.h"
-#include "../include/dkcipher.h"
 #include "../include/aes.h"
 #include "../include/justGarble.h"
 
