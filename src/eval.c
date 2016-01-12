@@ -47,8 +47,9 @@ hash2(block *A, block *B, const block tweak1, const block tweak2, AES_KEY *key)
 static int
 evaluateHalfGates(GarbledCircuit *gc, block *extractedLabels, block *outputMap)
 {
-	DKCipherContext dkCipherContext;
-	DKCipherInit(&gc->globalKey, &dkCipherContext);
+    AES_KEY K;
+
+	AES_set_encrypt_key((unsigned char *) &gc->globalKey, 128, &K);
 
     /* Set input wire labels */
 	for (long i = 0; i < gc->n; i++) {
@@ -76,7 +77,7 @@ evaluateHalfGates(GarbledCircuit *gc, block *extractedLabels, block *outputMap)
             tweak1 = makeBlock(2 * i, (long) 0);
             tweak2 = makeBlock(2 * i + 1, (long) 0);
 
-            hash2(&A, &B, tweak1, tweak2, &dkCipherContext.K);
+            hash2(&A, &B, tweak1, tweak2, &K);
 
             W = xorBlocks(A, B);
             if (sa)
@@ -99,9 +100,10 @@ static int
 evaluateStandard(GarbledCircuit *gc, block *extractedLabels,
                  block *outputMap)
 {
-	DKCipherContext dkCipherContext;
-	DKCipherInit(&(gc->globalKey), &dkCipherContext);
-	block zer = zero_block();
+    block zer = zero_block();
+    AES_KEY K;
+
+    AES_set_encrypt_key((unsigned char *) &gc->globalKey, 128, &K);
 
     /* Set input wire labels */
 	for (long i = 0; i < gc->n; i++) {
@@ -133,12 +135,7 @@ evaluateStandard(GarbledCircuit *gc, block *extractedLabels,
                 tmp = gc->garbledTable[i].table[2*a+b-1];
 
             tmp = xorBlocks(tmp, val);
-            AES_ecb_encrypt_blks(&val, 1, &dkCipherContext.K);
-
-            /* val = _mm_xor_si128(val, sched[0]); */
-            /* for (int j = 1; j < 10; j++) */
-            /*     val = _mm_aesenc_si128(val, sched[j]); */
-            /* val = _mm_aesenclast_si128(val, sched[j]); */
+            AES_ecb_encrypt_blks(&val, 1, &K);
 
             gc->wires[gg->output].label = xorBlocks(val, tmp);
         }

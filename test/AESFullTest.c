@@ -24,8 +24,6 @@
 #include <time.h>
 #include "../include/justGarble.h"
 
-int *final;
-
 #define AES_CIRCUIT_FILE_NAME "./aesCircuit"
 
 void
@@ -47,13 +45,10 @@ buildAESCircuit(GarbledCircuit *gc)
 	int subBytesOutputs[n];
 	int shiftRowsOutputs[n];
 	int mixColumnOutputs[n];
-	block labels[2 * n];
-	block outputbs[m];
-	OutputMap outputMap = outputbs;
-	InputLabels inputLabels = labels;
-	int i;
+	block inputLabels[2 * n];
+	block outputMap[m];
 
-	createInputLabels(labels, n);
+	createInputLabels(inputLabels, n);
 	createEmptyGarbledCircuit(gc, n, m, q, r, inputLabels);
 	startBuilding(gc, &garblingContext);
 
@@ -63,26 +58,25 @@ buildAESCircuit(GarbledCircuit *gc)
 
 		AddRoundKey(gc, &garblingContext, addKeyInputs, addKeyOutputs);
 
-		for (i = 0; i < 16; i++) {
+		for (int i = 0; i < 16; i++) {
 			SubBytes(gc, &garblingContext, addKeyOutputs + 8 * i,
                      subBytesOutputs + 8 * i);
 		}
 
 		ShiftRows(gc, &garblingContext, subBytesOutputs, shiftRowsOutputs);
 
-		for (i = 0; i < 4; i++) {
+		for (int i = 0; i < 4; i++) {
 			if (round != roundLimit - 1)
 				MixColumns(gc, &garblingContext,
                            shiftRowsOutputs + i * 32, mixColumnOutputs + 32 * i);
 		}
-		for (i = 0; i < 128; i++) {
+		for (int i = 0; i < 128; i++) {
 			addKeyInputs[i] = mixColumnOutputs[i];
 			addKeyInputs[i + 128] = (round + 2) * 128 + i;
 		}
 	}
 
-	final = mixColumnOutputs;
-	finishBuilding(gc, &garblingContext, outputMap, final);
+	finishBuilding(gc, &garblingContext, outputMap, mixColumnOutputs);
 	writeCircuitToFile(gc, AES_CIRCUIT_FILE_NAME);
 }
 

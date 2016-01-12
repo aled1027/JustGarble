@@ -40,7 +40,7 @@ void
 test(int n, int nlayers, int times)
 {
     GarbledCircuit gc;
-    GarbleType type = GARBLE_TYPE_STANDARD;
+    GarbleType type = GARBLE_TYPE_HALFGATES;
 
     block inputLabels[2 * n];
     block outputLabels[2 * n];

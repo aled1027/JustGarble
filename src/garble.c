@@ -34,11 +34,11 @@
 int FINAL_ROUND = 0;
 
 int
-createNewWire(Wire *in, GarblingContext *garblingContext, int id)
+createNewWire(Wire *in, GarblingContext *ctxt, int id)
 {
 	in->id = id;
 	in->label0 = randomBlock();
-	in->label1 = xorBlocks(garblingContext->R, in->label0);
+	in->label1 = xorBlocks(ctxt->R, in->label0);
 	return 0;
 }
 
@@ -70,7 +70,6 @@ int
 createEmptyGarbledCircuit(GarbledCircuit *gc, int n, int m,
                           int q, int r, block *inputLabels)
 {
-	startTime = RDTSC;
 	gc->id = getNextId();
     (void) posix_memalign((void **) &gc->garbledGates, 128, sizeof(GarbledGate) * q);
     (void) posix_memalign((void **) &gc->garbledTable, 128, sizeof(GarbledTable) * q);
@@ -84,7 +83,8 @@ createEmptyGarbledCircuit(GarbledCircuit *gc, int n, int m,
 	}
 	gc->m = m;
 	gc->n = n;
-	gc->q = q;
+    /* q is set in finishBuilding() */
+	gc->q = -1;
 	gc->r = r;
 	for (int i = 0; i < r; i++) {
 		gc->wires[i].id = 0;
@@ -98,7 +98,6 @@ createEmptyGarbledCircuit(GarbledCircuit *gc, int n, int m,
 		gc->wires[i / 2].label0 = inputLabels[i];
 		gc->wires[i / 2].label1 = inputLabels[i + 1];
 	}
-    printf("%d %d %d %d\n", gc->n, gc->m, gc->q, gc->r);
 	return 0;
 }
 
@@ -117,7 +116,6 @@ startBuilding(GarbledCircuit *gc, GarblingContext *gctxt)
 {
     gctxt->wireIndex = gc->n; /* start at first non-input wire */
 	gctxt->gateIndex = 0;
-	gctxt->tableIndex = 0;
 	gctxt->R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
 	gctxt->fixedWires = malloc(sizeof(int) * gc->r);
 	gc->globalKey = randomBlock();
@@ -147,8 +145,7 @@ finishBuilding(GarbledCircuit *gc, GarblingContext *gctxt,
         }
 	}
 	gc->q = gctxt->gateIndex;
-	endTime = RDTSC;
-	return (int) (endTime - startTime);
+    return 0;
 }
 
 int
@@ -191,26 +188,24 @@ hash4(block *A0, block *A1, block *B0, block *B1,
 static void
 garbleCircuitHalfGates(GarbledCircuit *gc, block *inputLabels, block *outputMap)
 {
-	GarblingContext ctxt;
+	block R;
+    AES_KEY K;
 
 	gc->id = getFreshId();
 
-    ctxt.R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
+    R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
     /* Set input wire labels */
-	createInputLabelsWithR(inputLabels, gc->n, &ctxt.R);
+	createInputLabelsWithR(inputLabels, gc->n, &R);
 
 	for (int i = 0; i < 2 * gc->n; i += 2) {
 		gc->wires[i/2].id = i+1;
 		gc->wires[i/2].label0 = inputLabels[i];
 		gc->wires[i/2].label1 = inputLabels[i+1];
 	}
-	/* ctxt.gateIndex = 0; */
-	/* ctxt.wireIndex = gc->n; */
-    {
-        block key = randomBlock();
-        gc->globalKey = key;
-        DKCipherInit(&key, &(ctxt.dkCipherContext));
-    }
+
+    gc->globalKey = randomBlock();
+    AES_set_encrypt_key((unsigned char *) &gc->globalKey, 128, &K);
+
     /* Process garbled gates */
 	for (long i = 0; i < gc->q; i++) {
         GarbledGate *gg;
@@ -237,13 +232,12 @@ garbleCircuitHalfGates(GarbledCircuit *gc, block *inputLabels, block *outputMap)
             tweak1 = makeBlock(2 * i, (long) 0);
             tweak2 = makeBlock(2 * i + 1, (long) 0);
 
-            hash4(&A0, &A1, &B0, &B1, tweak1, tweak2,
-                  &ctxt.dkCipherContext.K);
+            hash4(&A0, &A1, &B0, &B1, tweak1, tweak2, &K);
             switch (gg->type) {
             case ANDGATE:
                 table[0] = xorBlocks(A0, A1);
                 if (pb)
-                    table[0] = xorBlocks(table[0], ctxt.R);
+                    table[0] = xorBlocks(table[0], R);
                 W0 = A0;
                 if (pa)
                     W0 = xorBlocks(W0, table[0]);
@@ -272,8 +266,7 @@ garbleCircuitHalfGates(GarbledCircuit *gc, block *inputLabels, block *outputMap)
             }
         }
 
-        gc->wires[output].label1 =
-            xorBlocks(gc->wires[output].label0, ctxt.R);
+        gc->wires[output].label1 = xorBlocks(gc->wires[output].label0, R);
 	}
     /* Set output wire labels */
 	for (int i = 0; i < gc->m; ++i) {
@@ -283,61 +276,59 @@ garbleCircuitHalfGates(GarbledCircuit *gc, block *inputLabels, block *outputMap)
 }
 
 static void
-garbleCircuitStandard(GarbledCircuit *garbledCircuit, block *inputLabels,
+garbleCircuitStandard(GarbledCircuit *gc, block *inputLabels,
                       block *outputMap)
 {
-	GarblingContext garblingContext;
+    block R;
+    AES_KEY K;
 
 	GarbledTable *garbledTable;
 
-    garblingContext.R = xorBlocks(garbledCircuit->wires[0].label0,
-                                  garbledCircuit->wires[0].label1);
+    R = xorBlocks(gc->wires[0].label0,
+                  gc->wires[0].label1);
 
-	createInputLabelsWithR(inputLabels, garbledCircuit->n, &garblingContext.R);
+	createInputLabelsWithR(inputLabels, gc->n, &R);
 
-	garbledCircuit->id = getFreshId();
+	gc->id = getFreshId();
 
-	for (int i = 0; i < 2 * garbledCircuit->n; i += 2) {
-		garbledCircuit->wires[i/2].id = i+1;
-		garbledCircuit->wires[i/2].label0 = inputLabels[i];
-		garbledCircuit->wires[i/2].label1 = inputLabels[i+1];
+	for (int i = 0; i < 2 * gc->n; i += 2) {
+		gc->wires[i/2].id = i+1;
+		gc->wires[i/2].label0 = inputLabels[i];
+		gc->wires[i/2].label1 = inputLabels[i+1];
 	}
-	garbledTable = garbledCircuit->garbledTable;
-	garblingContext.gateIndex = 0;
-	garblingContext.wireIndex = garbledCircuit->n;
-	block key = randomBlock();
-	garbledCircuit->globalKey = key;
-	DKCipherInit(&key, &(garblingContext.dkCipherContext));
+	garbledTable = gc->garbledTable;
+	gc->globalKey = randomBlock();
+	AES_set_encrypt_key((unsigned char *) &gc->globalKey, 128, &K);
 
-	for (long i = 0; i < garbledCircuit->q; i++) {
+	for (long i = 0; i < gc->q; i++) {
         GarbledGate *garbledGate;
         int input0, input1, output;
         block tweak, blocks[4], keys[4];
         long lsb0, lsb1;
 
-        garbledGate = &(garbledCircuit->garbledGates[i]);
+        garbledGate = &(gc->garbledGates[i]);
 		input0 = garbledGate->input0;
         input1 = garbledGate->input1;
 		output = garbledGate->output;
 
 		if (garbledGate->type == XORGATE) {
-			garbledCircuit->wires[output].label0
-                = xorBlocks(garbledCircuit->wires[input0].label0,
-                            garbledCircuit->wires[input1].label0);
-			garbledCircuit->wires[output].label1
-                = xorBlocks(garbledCircuit->wires[input0].label1,
-                            garbledCircuit->wires[input1].label0);
+			gc->wires[output].label0
+                = xorBlocks(gc->wires[input0].label0,
+                            gc->wires[input1].label0);
+			gc->wires[output].label1
+                = xorBlocks(gc->wires[input0].label1,
+                            gc->wires[input1].label0);
 			continue;
 		}
 		tweak = makeBlock(i, (long)0);
-		lsb0 = getLSB(garbledCircuit->wires[input0].label0);
-		lsb1 = getLSB(garbledCircuit->wires[input1].label0);
+		lsb0 = getLSB(gc->wires[input0].label0);
+		lsb1 = getLSB(gc->wires[input1].label0);
 
 		block A0, A1, B0, B1;
-		A0 = DOUBLE(garbledCircuit->wires[input0].label0);
-		A1 = DOUBLE(garbledCircuit->wires[input0].label1);
-		B0 = DOUBLE(DOUBLE(garbledCircuit->wires[input1].label0));
-		B1 = DOUBLE(DOUBLE(garbledCircuit->wires[input1].label1));
+		A0 = DOUBLE(gc->wires[input0].label0);
+		A1 = DOUBLE(gc->wires[input0].label1);
+		B0 = DOUBLE(DOUBLE(gc->wires[input1].label0));
+		B1 = DOUBLE(DOUBLE(gc->wires[input1].label1));
 
 		keys[0] = xorBlocks(A0, B0);
 		keys[0] = xorBlocks(keys[0], tweak);
@@ -355,7 +346,7 @@ garbleCircuitStandard(GarbledCircuit *garbledCircuit, block *inputLabels,
         mask[1] = keys[1];
         mask[2] = keys[2];
         mask[3] = keys[3];
-        AES_ecb_encrypt_blks(keys, 4, &(garblingContext.dkCipherContext.K));
+        AES_ecb_encrypt_blks(keys, 4, &K);
         mask[0] = xorBlocks(mask[0], keys[0]);
         mask[1] = xorBlocks(mask[1], keys[1]);
         mask[2] = xorBlocks(mask[2], keys[2]);
@@ -370,9 +361,9 @@ garbleCircuitStandard(GarbledCircuit *garbledCircuit, block *inputLabels,
         else if (2*(1-lsb0) + 1-lsb1 ==0)
             newToken = mask[3];
 
-		block newToken2 = xorBlocks(garblingContext.R, newToken);
-		block *label0 = &garbledCircuit->wires[garbledGate->output].label0;
-		block *label1 = &garbledCircuit->wires[garbledGate->output].label1;
+		block newToken2 = xorBlocks(R, newToken);
+		block *label0 = &gc->wires[garbledGate->output].label0;
+		block *label1 = &gc->wires[garbledGate->output].label1;
 
         switch (garbledGate->type) {
         case ANDGATE:
@@ -429,9 +420,9 @@ garbleCircuitStandard(GarbledCircuit *garbledCircuit, block *inputLabels,
 		if (2*(1-lsb0) + (1-lsb1) !=0)
             garbledTable[i].table[2*(1-lsb0) + (1-lsb1)-1] = xorBlocks(blocks[3], mask[3]);
 	}
-	for (int i = 0; i < garbledCircuit->m; ++i) {
-		outputMap[2*i] = garbledCircuit->wires[garbledCircuit->outputs[i]].label0;
-		outputMap[2*i+1] = garbledCircuit->wires[garbledCircuit->outputs[i]].label1;
+	for (int i = 0; i < gc->m; ++i) {
+		outputMap[2*i] = gc->wires[gc->outputs[i]].label0;
+		outputMap[2*i+1] = gc->wires[gc->outputs[i]].label1;
 	}
 }
 
@@ -508,7 +499,7 @@ createInputLabels(block *inputLabels, int n)
 }
 
 int
-findGatesWithMatchingInputs(GarbledCircuit *garbledCircuit,
+findGatesWithMatchingInputs(GarbledCircuit *gc,
                             block *inputLabels, block *outputMap,
                             int *outputs)
 {
@@ -516,16 +507,16 @@ findGatesWithMatchingInputs(GarbledCircuit *garbledCircuit,
 	DKCipherContext dkCipherContext;
 	int matching = 0;
 
-	DKCipherInit(&(garbledCircuit->globalKey), &dkCipherContext);
+	DKCipherInit(&(gc->globalKey), &dkCipherContext);
 
-	for (int i = 0; i < garbledCircuit->n; i++) {
-		garbledCircuit->wires[i].label = inputLabels[i];
+	for (int i = 0; i < gc->n; i++) {
+		gc->wires[i].label = inputLabels[i];
 	}
 
-	for (int i = 0; i < garbledCircuit->q; i++) {
-		garbledGate1 = &garbledCircuit->garbledGates[i];
-		for (int j = i + 1; j < garbledCircuit->q; j++) {
-			garbledGate2 = &garbledCircuit->garbledGates[j];
+	for (int i = 0; i < gc->q; i++) {
+		garbledGate1 = &gc->garbledGates[i];
+		for (int j = i + 1; j < gc->q; j++) {
+			garbledGate2 = &gc->garbledGates[j];
 			if (garbledGate1->input0 == garbledGate2->input0
 					&& garbledGate1->input1 == garbledGate2->input1) {
 				matching++;

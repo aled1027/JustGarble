@@ -72,10 +72,10 @@ typedef struct {
 } GarbledOutput;
 
 typedef struct {
+    /* XXX: tableIndex is not used, but deleting causes segfault in AESFullTest */
 	long wireIndex, gateIndex, tableIndex;
 	DKCipherContext dkCipherContext;
 	int *fixedWires;
-	int fixCount;
 	block R;
 } GarblingContext;
 

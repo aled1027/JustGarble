@@ -25,9 +25,9 @@ int
 genericGate(GarbledCircuit *gc, GarblingContext *ctxt,
             int input0, int input1, int output, int *vals, int type)
 {
-	createNewWire(&(gc->wires[output]), ctxt, output);
+	createNewWire(&gc->wires[output], ctxt, output);
 
-	GarbledGate *garbledGate = &(gc->garbledGates[ctxt->gateIndex]);
+	GarbledGate *garbledGate = &gc->garbledGates[ctxt->gateIndex];
 
 	garbledGate->id = ctxt->gateIndex;
 	garbledGate->type = type;
@@ -35,9 +35,8 @@ genericGate(GarbledCircuit *gc, GarblingContext *ctxt,
 	garbledGate->input1 = input1;
 	garbledGate->output = output;
 
-	(void) makeBlock(ctxt->gateIndex, (long)0);
+	/* (void) makeBlock(ctxt->gateIndex, (long)0); */
 	ctxt->gateIndex++;
-	ctxt->tableIndex++;
 
 	return garbledGate->id;
 }
