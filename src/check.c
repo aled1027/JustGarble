@@ -26,7 +26,8 @@
 
 int
 checkCircuit(GarbledCircuit *garbledCircuit, InputLabels inputLabels,
-             OutputMap outputMap, int check(int *a, int *out, int s))
+             OutputMap outputMap, GarbleType type,
+             int check(int *a, int *out, int s))
 {
 	int i, j;
 	int n = garbledCircuit->n;
@@ -42,7 +43,7 @@ checkCircuit(GarbledCircuit *garbledCircuit, InputLabels inputLabels,
 			inputs[j] = rand() % 2;
 		}
 		extractLabels(extractedLabels, inputLabels, inputs, n);
-		evaluate(garbledCircuit, extractedLabels, computedOutputMap);
+		evaluate(garbledCircuit, extractedLabels, computedOutputMap, type);
 		mapOutputs(outputMap, computedOutputMap, outputVals, m);
 		check(inputs, outputReal, n);
 		for (j = 0; j < m; j++)
@@ -51,26 +52,4 @@ checkCircuit(GarbledCircuit *garbledCircuit, InputLabels inputLabels,
 			}
 	}
 	return 0;
-}
-
-unsigned long
-timedEval(GarbledCircuit *garbledCircuit, InputLabels inputLabels)
-{
-	int n = garbledCircuit->n;
-	int m = garbledCircuit->m;
-	block extractedLabels[n];
-	block outputs[m];
-	int j;
-	int inputs[n];
-	unsigned long startTime, endTime;
-	unsigned long sum = 0;
-	for (j = 0; j < n; j++) {
-		inputs[j] = rand() % 2;
-	}
-	extractLabels(extractedLabels, inputLabels, inputs, n);
-	startTime = RDTSC;
-	evaluate(garbledCircuit, extractedLabels, outputs);
-	endTime = RDTSC;
-	sum = endTime - startTime;
-	return sum;
 }

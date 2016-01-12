@@ -40,6 +40,7 @@ void
 test(int n, int nlayers, int times)
 {
     GarbledCircuit gc;
+    GarbleType type = GARBLE_TYPE_STANDARD;
 
     block inputLabels[2 * n];
     block outputLabels[2 * n];
@@ -53,7 +54,7 @@ test(int n, int nlayers, int times)
     srand_sse(time(NULL));
 
     buildCircuit(&gc, n, nlayers);
-    (void) garbleCircuit(&gc, inputLabels, outputLabels);
+    (void) garbleCircuit(&gc, inputLabels, outputLabels, type);
     {
         block extractedLabels[n];
         block computedOutputMap[n];
@@ -67,7 +68,7 @@ test(int n, int nlayers, int times)
         }
         printf("\n");
         extractLabels(extractedLabels, inputLabels, inputs, n);
-        evaluate(&gc, extractedLabels, computedOutputMap);
+        evaluate(&gc, extractedLabels, computedOutputMap, type);
         mapOutputs(outputLabels, computedOutputMap, outputs, n);
         printf("Output: ");
         for (int i = 0; i < n; ++i) {
@@ -78,15 +79,16 @@ test(int n, int nlayers, int times)
 
     for (int i = 0; i < times; ++i) {
         for (int j = 0; j < times; ++j) {
-            timeGarble[j] = garbleCircuit(&gc, inputLabels, outputLabels);
-            timeEval[j] = timedEval(&gc, inputLabels);
+            timeGarble[j] = timedGarble(&gc, inputLabels, outputLabels, type);
+            timeEval[j] = timedEval(&gc, inputLabels, type);
         }
         timeGarbleMedians[i] = ((double) median(timeGarble, times)) / gc.q;
         timeEvalMedians[i] = ((double) median(timeEval, times)) / gc.q;
     }
-    printf("%lf %lf\n",
-           doubleMean(timeGarbleMedians, times),
-           doubleMean(timeEvalMedians, times));
+    if (times > 0)
+        printf("%lf %lf\n",
+               doubleMean(timeGarbleMedians, times),
+               doubleMean(timeEvalMedians, times));
 }
 
 int

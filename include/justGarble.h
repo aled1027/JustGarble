@@ -22,6 +22,8 @@
 #include "dkcipher.h"
 #include "common.h"
 
+typedef enum garbleType { GARBLE_TYPE_STANDARD, GARBLE_TYPE_HALFGATES } GarbleType;
+
 typedef struct {
 	long value, id;
 	block label, label0, label1;
@@ -40,9 +42,6 @@ typedef struct {
 typedef struct {
 	long input0, input1, output; int id, type;
 } GarbledGate;
-
-
-typedef char shortBlock[10];
 
 typedef struct {
 	block table[4];
@@ -75,7 +74,7 @@ typedef struct {
 typedef struct {
 	long wireIndex, gateIndex, tableIndex;
 	DKCipherContext dkCipherContext;
-	int* fixedWires;
+	int *fixedWires;
 	int fixCount;
 	block R;
 } GarblingContext;
@@ -132,16 +131,23 @@ int createInputLabelsWithR(InputLabels inputLabels, int n, block* R);
 //The inputLabels field is expected to contain 2n fresh input labels, obtained
 //by calling createInputLabels. The outputMap is expected to be a 2m-block sized
 //empty array.
-long garbleCircuit(GarbledCircuit *garbledCircuit, InputLabels inputLabels,
-		OutputMap outputMap);
+void
+garbleCircuit(GarbledCircuit *gc, block *inputLabels,
+              block *outputMap, GarbleType type);
+unsigned long
+timedGarble(GarbledCircuit *gc, block *inputLabels, block *outputMap,
+            GarbleType type);
 
 //Evaluate a garbled circuit, using n input labels in the Extracted Labels
 //to return m output labels. The garbled circuit might be generated either in 
 //one piece, as the result of running garbleCircuit, or may be pieced together,
 // by building the circuit (startBuilding ... finishBuilding), and adding 
 // garbledTable from another source, say, a network transmission.
-int evaluate(GarbledCircuit *garbledCircuit, ExtractedLabels extractedLabels,
-		OutputMap outputMap);
+void
+evaluate(GarbledCircuit *gc, block *extractedLabels, block *outputMap,
+         GarbleType type);
+unsigned long
+timedEval(GarbledCircuit *gc, InputLabels inputLabels, GarbleType type);
 
 // A simple function that selects n input labels from 2n labels, using the 
 // inputBits array where each element is a bit.

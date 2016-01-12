@@ -38,10 +38,13 @@ int checkfn(int *a, int *outputs, int n) {
 	return outputs[0];
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+{
 	srand(time(NULL));
 	GarbledCircuit garbledCircuit;
 	GarblingContext garblingContext;
+    GarbleType type = GARBLE_TYPE_STANDARD;
 	int n = atoi(argv[1]) * 1024;
 	int m = 1;
 	int q = n;
@@ -49,13 +52,10 @@ int main(int argc, char **argv) {
 
 	//Setup input and output tokens/labels.
 	block *labels = (block*) malloc(sizeof(block) * 2 * n);
-	block *exlabels = (block*) malloc(sizeof(block) * n);
-	block *outputbs2 = (block*) malloc(sizeof(block) * m);
 	block *outputbs = (block*) malloc(sizeof(block) * m);
 	int *inp = (int *) malloc(sizeof(int) * n);
 	countToN(inp, n);
 	int outputs[1];
-	int i;
 
 	OutputMap outputMap = outputbs;
 	InputLabels inputLabels = labels;
@@ -79,11 +79,11 @@ int main(int argc, char **argv) {
 	readCircuitFromFile(&garbledCircuit2, "tst.scd");
 
 	//Actually garble the circuit created from the file.
-	garbleCircuit(&garbledCircuit2, inputLabels, outputMap);
+	garbleCircuit(&garbledCircuit2, inputLabels, outputMap, type);
 
 	//Evaluate the circuit with random values and check the computed
 	//values match the outputs of the desired function.
-	checkCircuit(&garbledCircuit2, inputLabels, outputMap, &(checkfn));
+	checkCircuit(&garbledCircuit2, inputLabels, outputMap, type, &(checkfn));
 
 	return 0;
 

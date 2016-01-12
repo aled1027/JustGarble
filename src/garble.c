@@ -98,6 +98,7 @@ createEmptyGarbledCircuit(GarbledCircuit *gc, int n, int m,
 		gc->wires[i / 2].label0 = inputLabels[i];
 		gc->wires[i / 2].label1 = inputLabels[i + 1];
 	}
+    printf("%d %d %d %d\n", gc->n, gc->m, gc->q, gc->r);
 	return 0;
 }
 
@@ -118,7 +119,7 @@ startBuilding(GarbledCircuit *gc, GarblingContext *gctxt)
 	gctxt->gateIndex = 0;
 	gctxt->tableIndex = 0;
 	gctxt->R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
-	gctxt->fixedWires = (int *) malloc(sizeof(int) * gc->r);
+	gctxt->fixedWires = malloc(sizeof(int) * gc->r);
 	gc->globalKey = randomBlock();
 	DKCipherInit(&gc->globalKey, &gctxt->dkCipherContext);
 	return 0;
@@ -126,7 +127,7 @@ startBuilding(GarbledCircuit *gc, GarblingContext *gctxt)
 
 int
 finishBuilding(GarbledCircuit *gc, GarblingContext *gctxt,
-               OutputMap outputMap, int *outputs)
+               block *outputMap, int *outputs)
 {
 	for (int i = 0; i < gc->m; i++) {
 		outputMap[2 * i] = gc->wires[outputs[i]].label0;
@@ -151,7 +152,7 @@ finishBuilding(GarbledCircuit *gc, GarblingContext *gctxt,
 }
 
 int
-extractLabels(ExtractedLabels extractedLabels, InputLabels inputLabels,
+extractLabels(block *extractedLabels, block *inputLabels,
               int* inputBits, int n)
 {
 	for (int i = 0; i < n; i++) {
@@ -165,16 +166,129 @@ extractLabels(ExtractedLabels extractedLabels, InputLabels inputLabels,
 
 }
 
-long
-garbleCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
-              block *outputMap)
+static void
+hash4(block *A0, block *A1, block *B0, block *B1,
+      const block tweak1, const block tweak2, AES_KEY *key)
+{
+    block keys[4];
+    block masks[4];
+
+    keys[0] = xorBlocks(DOUBLE(*A0), tweak1);
+    keys[1] = xorBlocks(DOUBLE(*A1), tweak1);
+    keys[2] = xorBlocks(DOUBLE(*B0), tweak2);
+    keys[3] = xorBlocks(DOUBLE(*B1), tweak2);
+    masks[0] = keys[0];
+    masks[1] = keys[1];
+    masks[2] = keys[2];
+    masks[3] = keys[3];
+    AES_ecb_encrypt_blks(keys, 4, key);
+    *A0 = xorBlocks(keys[0], masks[0]);
+    *A1 = xorBlocks(keys[1], masks[1]);
+    *B0 = xorBlocks(keys[2], masks[2]);
+    *B1 = xorBlocks(keys[3], masks[3]);
+}
+
+static void
+garbleCircuitHalfGates(GarbledCircuit *gc, block *inputLabels, block *outputMap)
+{
+	GarblingContext ctxt;
+
+	gc->id = getFreshId();
+
+    ctxt.R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
+    /* Set input wire labels */
+	createInputLabelsWithR(inputLabels, gc->n, &ctxt.R);
+
+	for (int i = 0; i < 2 * gc->n; i += 2) {
+		gc->wires[i/2].id = i+1;
+		gc->wires[i/2].label0 = inputLabels[i];
+		gc->wires[i/2].label1 = inputLabels[i+1];
+	}
+	/* ctxt.gateIndex = 0; */
+	/* ctxt.wireIndex = gc->n; */
+    {
+        block key = randomBlock();
+        gc->globalKey = key;
+        DKCipherInit(&key, &(ctxt.dkCipherContext));
+    }
+    /* Process garbled gates */
+	for (long i = 0; i < gc->q; i++) {
+        GarbledGate *gg;
+        block A0, A1, B0, B1;
+        int output;
+
+        gg = &(gc->garbledGates[i]);
+		output = gg->output;
+
+        A0 = gc->wires[gg->input0].label0;
+		A1 = gc->wires[gg->input0].label1;
+		B0 = gc->wires[gg->input1].label0;
+		B1 = gc->wires[gg->input1].label1;
+
+        if (gg->type == XORGATE) {
+			gc->wires[output].label0 = xorBlocks(A0, B0);
+        } else {
+            long pa = getLSB(A0);
+            long pb = getLSB(B0);
+            block table[2];
+            block tweak1, tweak2;
+            block tmp, W0;
+
+            tweak1 = makeBlock(2 * i, (long) 0);
+            tweak2 = makeBlock(2 * i + 1, (long) 0);
+
+            hash4(&A0, &A1, &B0, &B1, tweak1, tweak2,
+                  &ctxt.dkCipherContext.K);
+            switch (gg->type) {
+            case ANDGATE:
+                table[0] = xorBlocks(A0, A1);
+                if (pb)
+                    table[0] = xorBlocks(table[0], ctxt.R);
+                W0 = A0;
+                if (pa)
+                    W0 = xorBlocks(W0, table[0]);
+                tmp = xorBlocks(B0, B1);
+                table[1] = xorBlocks(tmp, gc->wires[gg->input0].label0);
+                W0 = xorBlocks(W0, B0);
+                if (pb)
+                    W0 = xorBlocks(W0, tmp);
+
+                gc->garbledTable[i].table[0] = table[0];
+                gc->garbledTable[i].table[1] = table[1];
+        
+                gc->wires[output].label0 = W0;
+                break;
+            case ORGATE:
+                assert(0);
+                exit(1);
+                break;
+            case NOTGATE:
+                assert(0);
+                exit(1);
+                break;
+            default:
+                assert(0);
+                exit(1);
+            }
+        }
+
+        gc->wires[output].label1 =
+            xorBlocks(gc->wires[output].label0, ctxt.R);
+	}
+    /* Set output wire labels */
+	for (int i = 0; i < gc->m; ++i) {
+		outputMap[2*i] = gc->wires[gc->outputs[i]].label0;
+		outputMap[2*i+1] = gc->wires[gc->outputs[i]].label1;
+	}
+}
+
+static void
+garbleCircuitStandard(GarbledCircuit *garbledCircuit, block *inputLabels,
+                      block *outputMap)
 {
 	GarblingContext garblingContext;
 
 	GarbledTable *garbledTable;
-    long startTime, endTime;
-
-	startTime = RDTSC;
 
     garblingContext.R = xorBlocks(garbledCircuit->wires[0].label0,
                                   garbledCircuit->wires[0].label1);
@@ -194,7 +308,6 @@ garbleCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
 	block key = randomBlock();
 	garbledCircuit->globalKey = key;
 	DKCipherInit(&key, &(garblingContext.dkCipherContext));
-	int tableIndex = 0;
 
 	for (long i = 0; i < garbledCircuit->q; i++) {
         GarbledGate *garbledGate;
@@ -308,23 +421,47 @@ garbleCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
         }
 
 		if (2*lsb0 + lsb1 !=0)
-            garbledTable[tableIndex].table[2*lsb0 + lsb1 -1] = xorBlocks(blocks[0], mask[0]);
+            garbledTable[i].table[2*lsb0 + lsb1 -1] = xorBlocks(blocks[0], mask[0]);
 		if (2*lsb0 + 1-lsb1 !=0)
-            garbledTable[tableIndex].table[2*lsb0 + 1-lsb1-1] = xorBlocks(blocks[1], mask[1]);
+            garbledTable[i].table[2*lsb0 + 1-lsb1-1] = xorBlocks(blocks[1], mask[1]);
 		if (2*(1-lsb0) + lsb1 !=0)
-            garbledTable[tableIndex].table[2*(1-lsb0) + lsb1-1] = xorBlocks(blocks[2], mask[2]);
+            garbledTable[i].table[2*(1-lsb0) + lsb1-1] = xorBlocks(blocks[2], mask[2]);
 		if (2*(1-lsb0) + (1-lsb1) !=0)
-            garbledTable[tableIndex].table[2*(1-lsb0) + (1-lsb1)-1] = xorBlocks(blocks[3], mask[3]);
-
-		tableIndex++;
-
+            garbledTable[i].table[2*(1-lsb0) + (1-lsb1)-1] = xorBlocks(blocks[3], mask[3]);
 	}
 	for (int i = 0; i < garbledCircuit->m; ++i) {
 		outputMap[2*i] = garbledCircuit->wires[garbledCircuit->outputs[i]].label0;
 		outputMap[2*i+1] = garbledCircuit->wires[garbledCircuit->outputs[i]].label1;
 	}
-	endTime = RDTSC;
-	return (endTime - startTime);
+}
+
+void
+garbleCircuit(GarbledCircuit *gc, block *inputLabels, block *outputMap,
+              GarbleType type)
+{
+    switch (type) {
+    case GARBLE_TYPE_STANDARD:
+        garbleCircuitStandard(gc, inputLabels, outputMap);
+        break;
+    case GARBLE_TYPE_HALFGATES:
+        garbleCircuitHalfGates(gc, inputLabels, outputMap);
+        break;
+    default:
+        assert(0);
+        exit(1);
+    }
+}
+
+unsigned long
+timedGarble(GarbledCircuit *gc, block *inputLabels, block *outputMap,
+            GarbleType type)
+{
+    unsigned long start, end;
+
+    start = RDTSC;
+    garbleCircuit(gc, inputLabels, outputMap, type);
+    end = RDTSC;
+    return end - start;
 }
 
 int
@@ -336,7 +473,7 @@ blockEqual(block a, block b)
 }
 
 int
-mapOutputs(OutputMap outputMap, OutputMap outputMap2, int *vals, int m)
+mapOutputs(block *outputMap, block *outputMap2, int *vals, int m)
 {
 	for (int i = 0; i < m; i++) {
 		if (blockEqual(outputMap2[i], outputMap[2 * i])) {
@@ -372,7 +509,7 @@ createInputLabels(block *inputLabels, int n)
 
 int
 findGatesWithMatchingInputs(GarbledCircuit *garbledCircuit,
-                            InputLabels inputLabels, OutputMap outputMap,
+                            block *inputLabels, block *outputMap,
                             int *outputs)
 {
 	GarbledGate *garbledGate1, *garbledGate2;

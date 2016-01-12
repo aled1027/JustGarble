@@ -38,13 +38,16 @@ int checkfn(int *a, int *outputs, int n) {
 	return outputs[0];
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv)
+{
 	srand(time(NULL));
 	GarbledCircuit garbledCircuit;
 	GarblingContext garblingContext;
-        if (argc != 2) {
-            printf("Usage: <prog_name> number_of_gates (in thousands)");
-        }
+    GarbleType type = GARBLE_TYPE_STANDARD;
+    if (argc != 2) {
+        printf("Usage: <prog_name> number_of_gates (in thousands)");
+    }
 
 	//Set up circuit parameters
 	int n = atoi(argv[1]) * 1024;
@@ -54,8 +57,6 @@ int main(int argc, char **argv) {
 
 	//Set up input and output tokens/labels.
 	block *labels = (block*) malloc(sizeof(block) * 2 * n);
-	block *exlabels = (block*) malloc(sizeof(block) * n);
-	block *outputbs2 = (block*) malloc(sizeof(block) * m);
 	block *outputbs = (block*) malloc(sizeof(block) * m);
 	int *inp = (int *) malloc(sizeof(int) * n);
 	countToN(inp, n);
@@ -73,11 +74,11 @@ int main(int argc, char **argv) {
 	finishBuilding(&garbledCircuit, &garblingContext, outputMap, outputs);
 
 	//Garble the built circuit.
-	garbleCircuit(&garbledCircuit, inputLabels, outputMap);
+	garbleCircuit(&garbledCircuit, inputLabels, outputMap, type);
 
 	//Evaluate the circuit with random values and check the computed
 	//values match the outputs of the desired function.
-	checkCircuit(&garbledCircuit, inputLabels, outputMap, &(checkfn));
+	checkCircuit(&garbledCircuit, inputLabels, outputMap, type, &(checkfn));
 
 	return 0;
 

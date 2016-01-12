@@ -22,7 +22,7 @@ LARGE = LargeCircuitTest
 FILE = CircuitFileTest
 rm = rm --f
 
-all: AES LARGE FILE
+all: AND AES LARGE FILE
 
 AND: $(OBJECTS) $(TESTDIR)/$(AND).c
 	$(CC) $(OBJECTFULL) $(TESTDIR)/$(AND).c -o $(BINDIR)/$(AND).out $(LIBS) $(CFLAGS) 
