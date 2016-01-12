@@ -15,6 +15,8 @@ buildCircuit(GarbledCircuit *gc, int n, int nlayers)
     int wires[n];
     int r = n + n / 2 * nlayers;
     int q = n / 2 * nlayers;
+    /* int r = n + n * nlayers; */
+    /* int q = n * nlayers; */
 
     printf("# gates = %d\n", q);
 
@@ -26,6 +28,11 @@ buildCircuit(GarbledCircuit *gc, int n, int nlayers)
 
 
     for (int i = 0; i < nlayers; ++i) {
+        /* for (int j = 0; j < n; ++j) { */
+        /*     wire = getNextWire(&ctxt); */
+        /*     NOTGate(gc, &ctxt, wires[j], wire); */
+        /*     wires[j] = wire; */
+        /* } */
         for (int j = 0; j < n; j += 2) {
             wire = getNextWire(&ctxt);
             ANDGate(gc, &ctxt, wires[j], wires[j+1], wire);
@@ -49,8 +56,7 @@ test(int n, int nlayers, int times, GarbleType type)
     double timeGarbleMedians[times];
     double timeEvalMedians[times];
 
-    srand(time(NULL));
-    srand_sse(time(NULL));
+    seedRandom();
 
     buildCircuit(&gc, n, nlayers);
     (void) garbleCircuit(&gc, inputLabels, outputLabels, type);

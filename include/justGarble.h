@@ -19,7 +19,6 @@
 
 #ifndef justGarble
 #define justGarble 1
-#include "dkcipher.h"
 #include "common.h"
 
 typedef enum garbleType { GARBLE_TYPE_STANDARD, GARBLE_TYPE_HALFGATES } GarbleType;
@@ -72,9 +71,7 @@ typedef struct {
 } GarbledOutput;
 
 typedef struct {
-    /* XXX: tableIndex is not used, but deleting causes segfault in AESFullTest */
-	long wireIndex, gateIndex, tableIndex;
-	DKCipherContext dkCipherContext;
+	long wireIndex, gateIndex;
 	int *fixedWires;
 	block R;
 } GarblingContext;
@@ -84,7 +81,8 @@ typedef block* InputLabels;
 typedef block* ExtractedLabels;
 typedef block* OutputMap;
 
-
+void
+seedRandom(void);
 
 /*
  * The following are the functions involved in creating, garbling, and 

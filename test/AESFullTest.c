@@ -29,8 +29,6 @@
 void
 buildAESCircuit(GarbledCircuit *gc)
 {
-	srand(time(NULL));
-    srand_sse(time(NULL));
 	GarblingContext garblingContext;
 
 	int roundLimit = 10;
@@ -98,6 +96,8 @@ main(int argc, char *argv[])
 	double timeEvalMedians[TIMES];
 
     GarbleType type = GARBLE_TYPE_STANDARD;
+
+    seedRandom();
 
     buildAESCircuit(&aesCircuit);
 	/* readCircuitFromFile(&aesCircuit, AES_CIRCUIT_FILE_NAME); */

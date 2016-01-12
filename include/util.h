@@ -46,16 +46,48 @@
 #define UTIL_H_
 
 #include "common.h"
+#include "aes.h"
 #include "emmintrin.h"
+#include <wmmintrin.h>
 
 int countToN(int *a, int N);
 int dbgBlock(block a);
-#define RDTSC ({unsigned long long res;  unsigned hi, lo;   __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi)); res =  ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );res;})
+#define RDTSC                                                           \
+    ({                                                                  \
+        unsigned long long res;                                         \
+        unsigned hi, lo;                                                \
+        __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));            \
+        res = ((unsigned long long) lo) | (((unsigned long long) hi) << 32); \
+        res;                                                            \
+    })
 int getWords(char *line, char *words[], int maxwords);
-#define fbits( v, p) ((v & (1 << p))>>p)
+#define fbits( v, p) ((v & (1 << p)) >> p)
 block randomBlock();
+void randAESBlock(block* out);
 int median(int A[], int n);
 double doubleMean(double A[], int n);
-void srand_sse(unsigned int seed);
+
+// Compute AES in place. out is a block and sched is a pointer to an 
+// expanded AES key.
+#define inPlaceAES(out, sched)                                          \
+    {                                                                   \
+        int jx;                                                         \
+        out = _mm_xor_si128(out, sched[0]);                             \
+        for (jx = 1; jx < 10; jx++)                                     \
+            out = _mm_aesenc_si128(out, sched[jx]);                     \
+        out = _mm_aesenclast_si128(out, sched[jx]);                     \
+    }
+
+block __current_rand_index;
+AES_KEY __rand_aes_key;
+
+#define getRandContext() ((__m128i *) (__rand_aes_key.rd_key));
+#define randAESBlock(out,sched)                                         \
+    {                                                                   \
+        __current_rand_index++;                                         \
+        *out = __current_rand_index;                                    \
+        inPlaceAES(*out, sched);                                        \
+    }
+
 
 #endif /* UTIL_H_ */

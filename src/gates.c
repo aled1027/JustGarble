@@ -35,7 +35,6 @@ genericGate(GarbledCircuit *gc, GarblingContext *ctxt,
 	garbledGate->input1 = input1;
 	garbledGate->output = output;
 
-	/* (void) makeBlock(ctxt->gateIndex, (long)0); */
 	ctxt->gateIndex++;
 
 	return garbledGate->id;

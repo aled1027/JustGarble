@@ -27,9 +27,20 @@
 
 #include <assert.h>
 #include <malloc.h>
-/* #include <wmmintrin.h> */
 
-void
+static void
+hash1(block *A, const block tweak, AES_KEY *K)
+{
+    block key;
+    block mask;
+
+    key = xorBlocks(DOUBLE(*A), tweak);
+    mask = key;
+    AES_ecb_encrypt_blks(&key, 1, K);
+    *A = xorBlocks(key, mask);
+}
+
+static void
 hash2(block *A, block *B, const block tweak1, const block tweak2, AES_KEY *key)
 {
     block keys[2];
@@ -63,7 +74,17 @@ evaluateHalfGates(GarbledCircuit *gc, block *extractedLabels, block *outputMap)
 			gc->wires[gg->output].label
                 = xorBlocks(gc->wires[gg->input0].label,
                             gc->wires[gg->input1].label);
-		} else {
+		} else if (gg->type == NOTGATE) {
+            block A, tweak;
+            long pa;
+
+            A = gc->wires[gg->input0].label;
+            tweak = makeBlock(2 * i, (long) 0);
+            pa = getLSB(A);
+            hash1(&A, tweak, &K);
+            gc->wires[gg->output].label =
+                xorBlocks(A, gc->garbledTable[i].table[pa]);
+        } else {
             block A, B, W;
             int sa, sb;
             block tweak1, tweak2;

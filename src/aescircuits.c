@@ -545,19 +545,12 @@ AFFINE(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 	int a6barOutput = getNextWire(garblingContext);
 
 	XORGate(garbledCircuit, garblingContext, inputs[0], inputs[1], AOutput);
-
 	XORGate(garbledCircuit, garblingContext, inputs[2], inputs[3], BOutput);
-
 	XORGate(garbledCircuit, garblingContext, inputs[4], inputs[5], COutput);
-
 	XORGate(garbledCircuit, garblingContext, inputs[6], inputs[7], DOutput);
-
 	NOTGate(garbledCircuit, garblingContext, inputs[0], a0barOutput);
-
 	NOTGate(garbledCircuit, garblingContext, inputs[1], a1barOutput);
-
 	NOTGate(garbledCircuit, garblingContext, inputs[5], a5barOutput);
-
 	NOTGate(garbledCircuit, garblingContext, inputs[6], a6barOutput);
 
 	int tempWireq0 = getNextWire(garblingContext);

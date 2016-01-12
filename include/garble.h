@@ -22,9 +22,8 @@
 
 #include "common.h"
 #include "justGarble.h"
-#include "dkcipher.h"
 
-
+#define DOUBLE(B) _mm_slli_epi64(B,1)
 
 #define FIXED_ZERO_GATE 0
 #define FIXED_ONE_GATE 15
