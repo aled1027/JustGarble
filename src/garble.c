@@ -420,6 +420,7 @@ garbleCircuitStandard(GarbledCircuit *gc, block *inputLabels,
 		if (2*(1-lsb0) + (1-lsb1) !=0)
             garbledTable[i].table[2*(1-lsb0) + (1-lsb1)-1] = xorBlocks(blocks[3], mask[3]);
 	}
+    /* Set output wire labels */
 	for (int i = 0; i < gc->m; ++i) {
 		outputMap[2*i] = gc->wires[gc->outputs[i]].label0;
 		outputMap[2*i+1] = gc->wires[gc->outputs[i]].label1;
