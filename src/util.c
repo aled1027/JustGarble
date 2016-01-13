@@ -23,7 +23,7 @@
 
 #include "justGarble.h"
 
-static __m128i cur_seed;
+/* static __m128i cur_seed; */
 
 int
 countToN(int *a, int n)
@@ -82,10 +82,11 @@ void
 seedRandom(void)
 {
     if (!already_initialized) {
+        block cur_seed;
         already_initialized = 1;
         __current_rand_index = zero_block();
         srand(time(NULL));
-        block cur_seed = _mm_set_epi32(rand(), rand(), rand(), rand());
+        cur_seed = _mm_set_epi32(rand(), rand(), rand(), rand());
         AES_set_encrypt_key((unsigned char *) &cur_seed, 128, &__rand_aes_key);
     }
 }
@@ -98,44 +99,3 @@ randomBlock(void)
     randAESBlock(&out, sched);
     return out;
 }
-
-/* void */
-/* srand_sse(unsigned int seed) */
-/* { */
-/* 	cur_seed = _mm_set_epi32(seed, seed + 1, seed, seed + 1); */
-/*     printf("SEED: "); */
-/*     print_block(cur_seed); */
-/*     printf("\n"); */
-/* } */
-
-/* block */
-/* randomBlock() */
-/* { */
-/* 	block cur_seed_split; */
-/* 	block multiplier; */
-/* 	block adder; */
-/* 	block mod_mask; */
-/* 	block sra_mask; */
-
-/* 	static const unsigned int mult[4] = { 214013, 17405, 214013, 69069 }; */
-/* 	static const unsigned int gadd[4] = { 2531011, 10395331, 13737667, 1 }; */
-/* 	static const unsigned int mask[4] = { 0xFFFFFFFF, 0, 0xFFFFFFFF, 0 }; */
-/* 	static const unsigned int masklo[4] = { 0x00007FFF, 0x00007FFF, 0x00007FFF, */
-/* 			0x00007FFF }; */
-
-/* 	adder = _mm_load_si128((block *) gadd); */
-/* 	multiplier = _mm_load_si128((block *) mult); */
-/* 	mod_mask = _mm_load_si128((block *) mask); */
-/* 	sra_mask = _mm_load_si128((block *) masklo); */
-/* 	cur_seed_split = _mm_shuffle_epi32(cur_seed, _MM_SHUFFLE(2, 3, 0, 1)); */
-/* 	cur_seed = _mm_mul_epu32(cur_seed, multiplier); */
-/* 	multiplier = _mm_shuffle_epi32(multiplier, _MM_SHUFFLE(2, 3, 0, 1)); */
-/* 	cur_seed_split = _mm_mul_epu32(cur_seed_split, multiplier); */
-/* 	cur_seed = _mm_and_si128(cur_seed, mod_mask); */
-/* 	cur_seed_split = _mm_and_si128(cur_seed_split, mod_mask); */
-/* 	cur_seed_split = _mm_shuffle_epi32(cur_seed_split, _MM_SHUFFLE(2, 3, 0, 1)); */
-/* 	cur_seed = _mm_or_si128(cur_seed, cur_seed_split); */
-/* 	cur_seed = _mm_add_epi32(cur_seed, adder); */
-
-/* 	return cur_seed; */
-/* } */

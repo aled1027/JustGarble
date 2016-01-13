@@ -148,9 +148,8 @@ int GF16SQCLCircuit(GarbledCircuit *gc, GarblingContext *garblingContext,
 
 int GF16MULCircuit(GarbledCircuit *gc, GarblingContext *garblingContext,
 		int* inputs, int* outputs) {
-	int temp[2];
-	temp[0] = getNextWire(garblingContext);
-	temp[1] = getNextWire(garblingContext);
+	(void) getNextWire(garblingContext);
+	(void) getNextWire(garblingContext);
 
 	int ab[4], cd[4], e[4];
 	ab[0] = inputs[2];

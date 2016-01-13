@@ -372,7 +372,7 @@ garbleCircuitStandard(GarbledCircuit *gc, block *inputLabels,
             newToken = mask[1];
         else if (2*(1-lsb0) + lsb1 ==0)
             newToken = mask[2];
-        else if (2*(1-lsb0) + 1-lsb1 ==0)
+        else /* if (2*(1-lsb0) + 1-lsb1 ==0) */
             newToken = mask[3];
 
 		block newToken2 = xorBlocks(R, newToken);
@@ -381,7 +381,7 @@ garbleCircuitStandard(GarbledCircuit *gc, block *inputLabels,
 
         switch (garbledGate->type) {
         case ANDGATE:
-			if (lsb1 == 1 & lsb0 == 1) {
+			if (lsb1 & lsb0) {
                 *label1 = newToken;
                 *label0 = newToken2;
 			} else {
@@ -394,7 +394,7 @@ garbleCircuitStandard(GarbledCircuit *gc, block *inputLabels,
 			blocks[3] = *label1;
             break;
         case ORGATE:
-			if (!(lsb1 == 0 & lsb0 == 0)) {
+			if (!(!lsb1 & !lsb0)) {
 				*label1 = newToken;
 				*label0 = newToken2;
 			} else {
@@ -407,7 +407,7 @@ garbleCircuitStandard(GarbledCircuit *gc, block *inputLabels,
 			blocks[3] = *label1;
             break;
         case NOTGATE:
-			if (lsb0 == 0) {
+			if (!lsb0) {
 				*label1 = newToken;
 				*label0 = newToken2;
 			} else {
@@ -509,7 +509,7 @@ void
 createInputLabels(block *inputLabels, int n)
 {
     block R = randomBlock();
-    *((uint16_t *) (&R)) |= 1;
+    *((char *) &R) |= 1;
     createInputLabelsWithR(inputLabels, n, R);
 }
 

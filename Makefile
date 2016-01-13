@@ -4,7 +4,7 @@
 
 CC=gcc
 INCLUDES = -Iinclude
-CFLAGS=-O3 -lm -lrt -lpthread -maes -msse4 -lmsgpack -march=native $(INCLUDES)
+CFLAGS=-O3 -Wall -lm -lrt -lpthread -maes -msse4 -lmsgpack -march=native $(INCLUDES)
 
 SRCDIR   = src
 SOURCES := $(wildcard $(SRCDIR)/*.c)
@@ -26,7 +26,7 @@ AND = ANDTest
 AES = AESFullTest
 LARGE = LargeCircuitTest
 FILE = CircuitFileTest
-rm = rm
+rm = rm -f
 
 .PHONEY: clean
 
@@ -50,7 +50,7 @@ FILE: $(SRCOBJS) $(CIRCOBJS)
 clean:
 	@$(rm) $(SRCDIR)/*.o
 	@$(rm) $(CIRCDIR)/*.o
-	@$(rm) $(BINDIR)/$(AES)
-	@$(rm) $(BINDIR)/$(LARGE)
-	@$(rm) $(BINDIR)/$(FILE)
+	@$(rm) $(BINDIR)/$(AES).out
+	@$(rm) $(BINDIR)/$(LARGE).out
+	@$(rm) $(BINDIR)/$(FILE).out
 

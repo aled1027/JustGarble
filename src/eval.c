@@ -70,7 +70,7 @@ evaluateHalfGates(GarbledCircuit *gc, block *extractedLabels, block *outputMap)
                             gc->wires[gg->input1].label);
 		} else if (gg->type == NOTGATE) {
             block A, tweak;
-            long pa;
+            unsigned short pa;
 
             A = gc->wires[gg->input0].label;
             tweak = makeBlock(2 * i, (long) 0);

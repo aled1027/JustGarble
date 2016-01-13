@@ -21,6 +21,7 @@
 #define common 1
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <xmmintrin.h>
@@ -40,7 +41,8 @@ typedef __m128i block;
 #define dbgs(X) printf("DEBUG %s:%d says %s \n",__FILE__, __LINE__, X)
 #define dbgb(X) printf("DEBUG %s:%d says %lx %lx\n",__FILE__, __LINE__, ((long *)X)[0], ((long *)X)[1])
 
-#define getLSB(x) (*((unsigned short *)&x)&1)
+/* #define getLSB(x) (*((unsigned short *) &x) & 1) */
+#define getLSB(x) (*((char *) &x) & 1)
 #define makeBlock(X,Y) _mm_set_epi64((__m64)(X), (__m64)(Y))
 
 #define SUCCESS 0
