@@ -16,7 +16,7 @@
 
 */
 
-#include "../include/aes.h"
+#include "aes.h"
 
 static void
 AES_128_Key_Expansion(const unsigned char *userkey, void *key)

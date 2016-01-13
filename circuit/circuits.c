@@ -16,13 +16,9 @@
 
 */
 
-
-#include "../include/garble.h"
-#include "../include/common.h"
-#include "../include/circuits.h"
-#include "../include/gates.h"
-#include "../include/util.h"
-#include "../include/justGarble.h"
+#include "justGarble.h"
+#include "gates.h"
+#include "circuits.h"
 
 #define fbits( v, p) ((v & (1 << p)) >> p)
 

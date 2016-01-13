@@ -16,12 +16,11 @@
 
 */
 
-#include "../include/justGarble.h"
-#include "../include/gates.h"
-#include "../include/aes.h"
-
 #include <assert.h>
 #include <malloc.h>
+
+#include "justGarble.h"
+#include "aes.h"
 
 static void
 hash1(block *A, const block tweak, AES_KEY *K)

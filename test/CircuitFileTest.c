@@ -22,7 +22,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
-#include "../include/justGarble.h"
+
+#include "justGarble.h"
+#include "circuits.h"
 
 int checkfn(int *a, int *outputs, int n) {
 	outputs[0] = a[0];

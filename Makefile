@@ -2,47 +2,54 @@
 #                    JustGarble
 # ***********************************************
 
+CC=gcc
+INCLUDES = -Iinclude
+CFLAGS=-O3 -lm -lrt -lpthread -maes -msse4 -lmsgpack -march=native $(INCLUDES)
+
 SRCDIR   = src
-OBJDIR   = obj
-BINDIR   = bin
+SOURCES := $(wildcard $(SRCDIR)/*.c)
+CIRCDIR = circuit
+CIRCUITS := $(wildcard $(CIRCDIR)/*.c)
 TESTDIR   = test
-OBJECTFULL = obj/*.o
 
-SOURCES  := $(wildcard $(SRCDIR)/*.c)
-INCLUDES := $(wildcard $(SRCDIR)/*.h)
-OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+BINDIR   = bin
 
-IDIR =../include
-CC=gcc 
-CFLAGS= -O3 -lm -lrt -lpthread -maes -msse4 -lmsgpack -march=native -I$(IDIR)
+SRCOBJS = $(SOURCES:.c=.o)
+CIRCOBJS = $(CIRCUITS:.c=.o)
+# SRCOBJS = $(SRCDIR)/*.o
+# CIRCOBJS = $(CIRCDIR)/*.o
+
+$(info ${SRCOBJS})
+$(info ${CIRCOBJS})
 
 AND = ANDTest
 AES = AESFullTest
 LARGE = LargeCircuitTest
 FILE = CircuitFileTest
-rm = rm --f
+rm = rm
+
+.PHONEY: clean
 
 all: AND AES LARGE FILE
 
-AND: $(OBJECTS) $(TESTDIR)/$(AND).c
-	$(CC) $(OBJECTFULL) $(TESTDIR)/$(AND).c -o $(BINDIR)/$(AND).out $(LIBS) $(CFLAGS) 
+AND: $(SRCOBJS) $(CIRCOBJS)
+	$(CC) $(SRCOBJS) $(CIRCOBJS) $(TESTDIR)/$(AND).c -o $(BINDIR)/$(AND).out $(CFLAGS) 
 
-AES: $(OBJECTS) $(TESTDIR)/$(AES).c
-	$(CC) $(OBJECTFULL) $(TESTDIR)/$(AES).c -o $(BINDIR)/$(AES).out $(LIBS) $(CFLAGS) 
+AES: $(SRCOBJS) $(CIRCOBJS)
+	$(CC) $(SRCOBJS) $(CIRCOBJS) $(TESTDIR)/$(AES).c -o $(BINDIR)/$(AES).out $(CFLAGS) 
 
-LARGE: $(OBJECTS) $(TESTDIR)/$(LARGE).c
-	$(CC) $(OBJECTFULL) $(TESTDIR)/$(LARGE).c -o $(BINDIR)/$(LARGE).out $(LIBS) $(CFLAGS) 
+LARGE: $(SRCOBJS) $(CIRCOBJS)
+	$(CC) $(SRCOBJS) $(CIRCOBJS) $(TESTDIR)/$(LARGE).c -o $(BINDIR)/$(LARGE).out $(CFLAGS) 
 
-FILE: $(OBJECTS) $(TESTDIR)/$(FILE).c
-	$(CC) $(OBJECTFULL) $(TESTDIR)/$(FILE).c -o $(BINDIR)/$(FILE).out $(LIBS) $(CFLAGS) 
+FILE: $(SRCOBJS) $(CIRCOBJS)
+	$(CC) $(SRCOBJS) $(CIRCOBJS) $(TESTDIR)/$(FILE).c -o $(BINDIR)/$(FILE).out $(CFLAGS)
 
+.c.o:
+	$(CC) -c $< -o $@ $(CFLAGS)
 
-$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
-	$(CC) -c $< -o $@ $(LIBS) $(CFLAGS) 
-
-.PHONEY: clean
 clean:
-	@$(rm) $(OBJECTS)
+	@$(rm) $(SRCDIR)/*.o
+	@$(rm) $(CIRCDIR)/*.o
 	@$(rm) $(BINDIR)/$(AES)
 	@$(rm) $(BINDIR)/$(LARGE)
 	@$(rm) $(BINDIR)/$(FILE)

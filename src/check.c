@@ -16,17 +16,11 @@
 
 */
 
-
-#include "../include/common.h"
-#include "../include/garble.h"
-#include "../include/check.h"
-#include "../include/util.h"
-#include "../include/justGarble.h"
-
+#include "justGarble.h"
 
 int
-checkCircuit(GarbledCircuit *garbledCircuit, InputLabels inputLabels,
-             OutputMap outputMap, GarbleType type,
+checkCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
+             block *outputMap, GarbleType type,
              int check(int *a, int *out, int s))
 {
 	int i, j;

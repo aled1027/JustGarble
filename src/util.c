@@ -16,14 +16,12 @@
 
 */
 
-#include "../include/common.h"
-#include "../include/util.h"
-#include "../include/justGarble.h"
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
+
+#include "justGarble.h"
 
 static __m128i cur_seed;
 

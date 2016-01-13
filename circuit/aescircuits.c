@@ -17,12 +17,9 @@
 
 */
 
-
-#include "../include/garble.h"
-#include "../include/common.h"
-#include "../include/gates.h"
-#include "../include/circuits.h"
-#include "../include/justGarble.h"
+#include "justGarble.h"
+#include "gates.h"
+#include "circuits.h"
 
 /*******
  * These AES circuits were modeled after the AES circuits of

@@ -16,21 +16,13 @@
 
 */
 
-#include "../include/garble.h"
-#include "../include/common.h"
-#include "../include/circuits.h"
-#include "../include/gates.h"
-#include "../include/util.h"
-#include "../include/aes.h"
-#include "../include/justGarble.h"
-
 #include <assert.h>
 #include <malloc.h>
 #include <stdint.h>
 #include <time.h>
 #include <wmmintrin.h>
 
-int FINAL_ROUND = 0;
+#include "justGarble.h"
 
 int
 createNewWire(Wire *in, GarblingContext *ctxt, int id)
@@ -110,20 +102,19 @@ removeGarbledCircuit(GarbledCircuit *gc)
     free(gc->outputs);
 }
 
-int
-startBuilding(GarbledCircuit *gc, GarblingContext *gctxt)
+void
+startBuilding(GarbledCircuit *gc, GarblingContext *ctxt)
 {
-    gctxt->wireIndex = gc->n; /* start at first non-input wire */
-	gctxt->gateIndex = 0;
-	gctxt->R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
-	gctxt->fixedWires = malloc(sizeof(int) * gc->r);
+    ctxt->wireIndex = gc->n; /* start at first non-input wire */
+	ctxt->gateIndex = 0;
+	ctxt->R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
+	ctxt->fixedWires = malloc(sizeof(int) * gc->r);
 	gc->globalKey = randomBlock();
-	return 0;
 }
 
-int
-finishBuilding(GarbledCircuit *gc, GarblingContext *gctxt,
-               block *outputMap, int *outputs)
+void
+finishBuilding(GarbledCircuit *gc, const GarblingContext *ctxt,
+               block *outputMap, const int *outputs)
 {
 	for (int i = 0; i < gc->m; i++) {
 		outputMap[2 * i] = gc->wires[outputs[i]].label0;
@@ -131,7 +122,7 @@ finishBuilding(GarbledCircuit *gc, GarblingContext *gctxt,
 		gc->outputs[i] = outputs[i];
 	}
 	for (int i = 0; i < gc->r; i++) {
-        switch (gctxt->fixedWires[i]) {
+        switch (ctxt->fixedWires[i]) {
         case FIXED_ZERO_GATE:
             gc->wires[i].label = gc->wires[i].label0;
             break;
@@ -142,13 +133,12 @@ finishBuilding(GarbledCircuit *gc, GarblingContext *gctxt,
             break;
         }
 	}
-	gc->q = gctxt->gateIndex;
-    return 0;
+	gc->q = ctxt->gateIndex;
 }
 
-int
-extractLabels(block *extractedLabels, block *inputLabels,
-              int* inputBits, int n)
+void
+extractLabels(block *extractedLabels, const block *inputLabels,
+              const int *inputBits, int n)
 {
 	for (int i = 0; i < n; i++) {
 		if (inputBits[i]) {
@@ -157,8 +147,6 @@ extractLabels(block *extractedLabels, block *inputLabels,
 			extractedLabels[i] = inputLabels[2 * i];
 		}
 	}
-	return 0;
-
 }
 
 static void
@@ -208,7 +196,7 @@ garbleCircuitHalfGates(GarbledCircuit *gc, block *inputLabels, block *outputMap)
 
     R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
     /* Set input wire labels */
-	createInputLabelsWithR(inputLabels, gc->n, &R);
+	createInputLabelsWithR(inputLabels, gc->n, R);
 
 	for (int i = 0; i < 2 * gc->n; i += 2) {
 		gc->wires[i/2].id = i+1;
@@ -313,7 +301,7 @@ garbleCircuitStandard(GarbledCircuit *gc, block *inputLabels,
     R = xorBlocks(gc->wires[0].label0,
                   gc->wires[0].label1);
 
-	createInputLabelsWithR(inputLabels, gc->n, &R);
+	createInputLabelsWithR(inputLabels, gc->n, R);
 
 	gc->id = getFreshId();
 
@@ -452,7 +440,7 @@ garbleCircuitStandard(GarbledCircuit *gc, block *inputLabels,
 	}
 }
 
-void
+int
 garbleCircuit(GarbledCircuit *gc, block *inputLabels, block *outputMap,
               GarbleType type)
 {
@@ -465,8 +453,9 @@ garbleCircuit(GarbledCircuit *gc, block *inputLabels, block *outputMap,
         break;
     default:
         assert(0);
-        exit(1);
+        return FAILURE;
     }
+    return SUCCESS;
 }
 
 unsigned long
@@ -490,7 +479,7 @@ blockEqual(block a, block b)
 }
 
 int
-mapOutputs(block *outputMap, block *outputMap2, int *vals, int m)
+mapOutputs(const block *outputMap, const block *outputMap2, int *vals, int m)
 {
 	for (int i = 0; i < m; i++) {
 		if (blockEqual(outputMap2[i], outputMap[2 * i])) {
@@ -499,30 +488,29 @@ mapOutputs(block *outputMap, block *outputMap2, int *vals, int m)
 			vals[i] = 1;
 		} else {
             printf("MAP FAILED %d\n", i);
+            return FAILURE;
         }
 	}
-	return 0;
+	return SUCCESS;
 }
 
-int
-createInputLabelsWithR(block *inputLabels, int n, block *R)
+void
+createInputLabelsWithR(block *inputLabels, int n, block R)
 {
     block *rctxt = getRandContext();
 	for (int i = 0; i < 2 * n; i += 2) {
 		randAESBlock(&inputLabels[i], rctxt);
-		inputLabels[i + 1] = xorBlocks(*R, inputLabels[i]);
+		inputLabels[i + 1] = xorBlocks(R, inputLabels[i]);
 	}
-	return 0;
 }
 
 
-int
+void
 createInputLabels(block *inputLabels, int n)
 {
     block R = randomBlock();
     *((uint16_t *) (&R)) |= 1;
-
-    return createInputLabelsWithR(inputLabels, n, &R);
+    createInputLabelsWithR(inputLabels, n, R);
 }
 
 int
