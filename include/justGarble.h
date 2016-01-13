@@ -70,6 +70,7 @@ typedef struct {
 	long id;
 } GarbledOutput;
 
+/* Used for constructing a circuit, and not for garbling as the name suggests */
 typedef struct {
 	long wireIndex, gateIndex;
 	int *fixedWires;

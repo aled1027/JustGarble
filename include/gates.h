@@ -19,6 +19,8 @@
 #ifndef GATES_H_
 #define GATES_H_
 
+#include "justGarble.h"
+
 int ANDGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext, int input0, int input1, int output);
 int ORGate(GarbledCircuit *gc, GarblingContext *garblingContext, int input0, int input1, int output);
 int XORGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext, int input0, int input1, int output);

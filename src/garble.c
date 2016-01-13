@@ -507,8 +507,9 @@ mapOutputs(block *outputMap, block *outputMap2, int *vals, int m)
 int
 createInputLabelsWithR(block *inputLabels, int n, block *R)
 {
+    block *rctxt = getRandContext();
 	for (int i = 0; i < 2 * n; i += 2) {
-		inputLabels[i] = randomBlock();
+		randAESBlock(&inputLabels[i], rctxt);
 		inputLabels[i + 1] = xorBlocks(*R, inputLabels[i]);
 	}
 	return 0;

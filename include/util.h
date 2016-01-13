@@ -47,8 +47,9 @@
 
 #include "common.h"
 #include "aes.h"
-#include "emmintrin.h"
+#include <emmintrin.h>
 #include <wmmintrin.h>
+#include <xmmintrin.h>
 
 int countToN(int *a, int N);
 int dbgBlock(block a);
@@ -61,7 +62,6 @@ int dbgBlock(block a);
         res;                                                            \
     })
 int getWords(char *line, char *words[], int maxwords);
-#define fbits( v, p) ((v & (1 << p)) >> p)
 block randomBlock();
 void randAESBlock(block* out);
 int median(int A[], int n);

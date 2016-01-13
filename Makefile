@@ -14,7 +14,7 @@ OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 IDIR =../include
 CC=gcc 
-CFLAGS= -g -lm -lrt -lpthread -maes -msse4 -lmsgpack -march=native -I$(IDIR)
+CFLAGS= -O3 -lm -lrt -lpthread -maes -msse4 -lmsgpack -march=native -I$(IDIR)
 
 AND = ANDTest
 AES = AESFullTest

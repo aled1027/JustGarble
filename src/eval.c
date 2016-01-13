@@ -16,13 +16,9 @@
 
 */
 
-#include "../include/common.h"
-#include "../include/garble.h"
-#include "../include/circuits.h"
-#include "../include/gates.h"
-#include "../include/util.h"
-#include "../include/aes.h"
 #include "../include/justGarble.h"
+#include "../include/gates.h"
+#include "../include/aes.h"
 
 #include <assert.h>
 #include <malloc.h>

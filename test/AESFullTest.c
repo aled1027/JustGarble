@@ -84,16 +84,17 @@ main(int argc, char *argv[])
 	int rounds = 10;
 	int n = 128 + (128 * rounds);
 	int m = 128;
+    int times = 100;
 
 	GarbledCircuit aesCircuit;
 	block inputLabels[2 * n];
 	block outputMap[2 * m];
 	int i, j;
 
-	int timeGarble[TIMES];
-	int timeEval[TIMES];
-	double timeGarbleMedians[TIMES];
-	double timeEvalMedians[TIMES];
+	int timeGarble[times];
+	int timeEval[times];
+	double timeGarbleMedians[times];
+	double timeEvalMedians[times];
 
     GarbleType type = GARBLE_TYPE_STANDARD;
 
@@ -116,17 +117,17 @@ main(int argc, char *argv[])
         mapOutputs(outputMap, computedOutputMap, outputVals, m);
     }
 
-	for (j = 0; j < TIMES; j++) {
-		for (i = 0; i < TIMES; i++) {
+	for (j = 0; j < times; j++) {
+		for (i = 0; i < times; i++) {
 			timeGarble[i] = timedGarble(&aesCircuit, inputLabels, outputMap, type);
 			timeEval[i] = timedEval(&aesCircuit, inputLabels, type);
 		}
-		timeGarbleMedians[j] = ((double) median(timeGarble, TIMES))
+		timeGarbleMedians[j] = ((double) median(timeGarble, times))
             / aesCircuit.q;
-		timeEvalMedians[j] = ((double) median(timeEval, TIMES)) / aesCircuit.q;
+		timeEvalMedians[j] = ((double) median(timeEval, times)) / aesCircuit.q;
 	}
-	double garblingTime = doubleMean(timeGarbleMedians, TIMES);
-	double evalTime = doubleMean(timeEvalMedians, TIMES);
+	double garblingTime = doubleMean(timeGarbleMedians, times);
+	double evalTime = doubleMean(timeEvalMedians, times);
 	printf("%lf %lf\n", garblingTime, evalTime);
 	return 0;
 }
