@@ -101,7 +101,7 @@ int fixedOneWire(GarbledCircuit *garbledCircuit,
 int NOTGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 		int input0, int output) {
 	int vals[] = { 1, 0, 1, 0 };
-	return genericGate(garbledCircuit, garblingContext, 0, input0, output, vals,
+	return genericGate(garbledCircuit, garblingContext, input0, input0, output, vals,
 			NOTGATE);
 }
 
