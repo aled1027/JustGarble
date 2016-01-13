@@ -62,8 +62,8 @@ main(int argc, char **argv)
 	countToN(inp, n);
 	int outputs[1];
 
-	OutputMap outputMap = outputbs;
-	InputLabels inputLabels = labels;
+	block *outputMap = outputbs;
+	block *inputLabels = labels;
 
 	//Actually build a circuit. Alternatively, this circuit could be read
 	//from a file.

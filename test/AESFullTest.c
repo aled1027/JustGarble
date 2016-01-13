@@ -22,7 +22,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+
 #include "../include/justGarble.h"
+#include "../include/circuits.h"
 
 #define AES_CIRCUIT_FILE_NAME "./aesCircuit"
 
@@ -75,7 +77,7 @@ buildAESCircuit(GarbledCircuit *gc)
 	}
 
 	finishBuilding(gc, &garblingContext, outputMap, mixColumnOutputs);
-	writeCircuitToFile(gc, AES_CIRCUIT_FILE_NAME);
+	/* writeCircuitToFile(gc, AES_CIRCUIT_FILE_NAME); */
 }
 
 int

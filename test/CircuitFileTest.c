@@ -51,17 +51,14 @@ main(int argc, char **argv)
 	int r = q+n;
 
 	//Setup input and output tokens/labels.
-	block *labels = (block*) malloc(sizeof(block) * 2 * n);
-	block *outputbs = (block*) malloc(sizeof(block) * m);
+	block *inputLabels = (block*) malloc(sizeof(block) * 2 * n);
+	block *outputMap = (block*) malloc(sizeof(block) * m);
 	int *inp = (int *) malloc(sizeof(int) * n);
 	countToN(inp, n);
 	int outputs[1];
 
-	OutputMap outputMap = outputbs;
-	InputLabels inputLabels = labels;
-
 	//Create a circuit.
-	createInputLabels(labels, n);
+	createInputLabels(inputLabels, n);
 	createEmptyGarbledCircuit(&garbledCircuit, n, m, q, r, inputLabels);
 	startBuilding(&garbledCircuit, &garblingContext);
 	MIXEDCircuit(&garbledCircuit, &garblingContext, n, inp, outputs);

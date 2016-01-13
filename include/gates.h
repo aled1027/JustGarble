@@ -21,12 +21,12 @@
 
 #include "justGarble.h"
 
-int ANDGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext, int input0, int input1, int output);
-int ORGate(GarbledCircuit *gc, GarblingContext *garblingContext, int input0, int input1, int output);
-int XORGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext, int input0, int input1, int output);
-int genericGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,  int input0, int input1, int output, int *vals, int type);
-int fixedZeroWire(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext);
-int fixedOneWire(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext);
-int NOTGate(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,  int input0, int output);
+int ANDGate(GarbledCircuit *gc, GarblingContext *ctxt, int input0, int input1, int output);
+int ORGate(GarbledCircuit *gc, GarblingContext *ctxt, int input0, int input1, int output);
+int XORGate(GarbledCircuit *gc, GarblingContext *ctxt, int input0, int input1, int output);
+int genericGate(GarbledCircuit *gc, GarblingContext *ctxt,  int input0, int input1, int output, int *vals, int type);
+int fixedZeroWire(GarbledCircuit *gc, GarblingContext *ctxt);
+int fixedOneWire(GarbledCircuit *gc, GarblingContext *ctxt);
+int NOTGate(GarbledCircuit *gc, GarblingContext *ctxt,  int input0, int output);
 
 #endif /* GATES_H_ */
