@@ -23,6 +23,7 @@
 #include "../include/gates.h"
 #include "../include/util.h"
 #include "../include/justGarble.h"
+#include <assert.h>
 
 
 int A2X1[8] = { 0x98, 0xF3, 0xF2, 0x48, 0x09, 0x81, 0xA9, 0xFF }, X2A1[8] = {
@@ -531,6 +532,8 @@ int LEQCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
 	int outWire = getNextWire(garblingContext);
 	NOTGate(gc, garblingContext, tempWires, outWire);
 	outputs[0] = outWire;
+    printf("gre: %d\n", tempWires);
+    printf("outwire: %d\n", outWire);
 	return 0;
 }
 
@@ -546,44 +549,66 @@ int GEQCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
 
 int LESCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
 		int* inputs, int* outputs) {
-	int tempWires[n / 2];
-	SUBCircuit(gc, garblingContext, n, inputs, tempWires);
-	int test = tempWires[n / 2 - 1];
-	int A = n / 2 - 1;
-	int B = n - 1;
+    /* Returns 0 if the first number is less.
+     * Returns 1 if the second number is less.
+     * Returns 0 if the numbers are equal.
+     */
 
-	int notA = getNextWire(garblingContext);
-	NOTGate(gc, garblingContext, A, notA);
+    int split = n/2;
+    int **andInputs = malloc(sizeof(int*) * (split - 1));
+    for (int i = 0; i < split - 1; i++) {
+        andInputs[i] = malloc(sizeof(int) * (split - i));
+        assert(andInputs[i]);
+        //printf("allocating addInputs[%d] with %d spots\n", i, split-i);
+    }
+    int *finalORInputs = malloc(sizeof(int) * split);
+    /* Go bit by bit and those operations */
+    for (int i = 0; i < split; i++) {
+        int A = split + i;
+        int B = i;
 
-	int notB = getNextWire(garblingContext);
-	NOTGate(gc, garblingContext, B, notB);
+	    int notA = getNextWire(garblingContext);
+	    NOTGate(gc, garblingContext, A, notA);
 
-	int case1 = getNextWire(garblingContext);
-	ANDGate(gc, garblingContext, A, notB, case1);
+	    int notB = getNextWire(garblingContext);
+	    NOTGate(gc, garblingContext, B, notB);
 
-	int tmpCase2 = getNextWire(garblingContext);
-	int case2 = getNextWire(garblingContext);
-	ORGate(gc, garblingContext, notA, B, tmpCase2);
-	NOTGate(gc, garblingContext, tmpCase2, case2);
+	    int case1 = getNextWire(garblingContext);
+	    ANDGate(gc, garblingContext, notA, B, case1);
 
-	int tmpCase3 = getNextWire(garblingContext);
-	int case3 = getNextWire(garblingContext);
-	ANDGate(gc, garblingContext, notA, notB, tmpCase3);
-	ANDGate(gc, garblingContext, tmpCase3, test, case3);
+	    int case2 = getNextWire(garblingContext);
+	    ANDGate(gc, garblingContext, A, notB, case2);
 
-	int notTest = getNextWire(garblingContext);
-	int tmpCase4 = getNextWire(garblingContext);
-	int case4 = getNextWire(garblingContext);
-	ANDGate(gc, garblingContext, A, B, tmpCase4);
-	NOTGate(gc, garblingContext, test, notTest);
-	ANDGate(gc, garblingContext, tmpCase4, notTest, case4);
+        if (i != split - 1)
+            andInputs[i][0] = case1;
 
-	int tempFinal1 = getNextWire(garblingContext);
-	int tempFinal2 = getNextWire(garblingContext);
-	outputs[0] = getNextWire(garblingContext);
-	ORGate(gc, garblingContext, case1, case2, tempFinal1);
-	ORGate(gc, garblingContext, case3, case4, tempFinal2);
-	ORGate(gc, garblingContext, tempFinal1, tempFinal2, outputs[0]);
+        int orOutput = getNextWire(garblingContext);
+        ORGate(gc, garblingContext, case1, case2, orOutput);
+
+        int norOutput = getNextWire(garblingContext);
+        NOTGate(gc, garblingContext, orOutput, norOutput);
+
+        for (int j = 0; j < i; j++) {
+            //printf("filling add[%d,%d]\n", j, i-j);
+            andInputs[j][i-j] = norOutput;
+        }
+        if (i == split - 1)
+        finalORInputs[split - 1] = case1;
+	}
+
+    /*  Do the aggregate operations with orInputs */
+    for (int i = 0; i < split - 1; i++) {
+        int nAndInputs = split - i;
+        ANDCircuit(gc, garblingContext, nAndInputs, andInputs[i], &finalORInputs[i]);
+    }
+
+    /* Final OR Circuit  */
+    int orOutput;
+    ORCircuit(gc, garblingContext, split, finalORInputs, outputs);
+    for (int i = 0; i < split - 1; i++)
+        free(andInputs[i]);
+    free(andInputs);
+    free(finalORInputs);
 	return 0;
 }
 
