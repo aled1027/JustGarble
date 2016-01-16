@@ -21,6 +21,8 @@
 
 #include "justGarble.h"
 
+int MUX21Circuit(GarbledCircuit *gc, GarblingContext *gcContext, int theSwitch, int input0, int input1, int *output);
+
 int
 SHLCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
            int* inputs, int* outputs);

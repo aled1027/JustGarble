@@ -31,6 +31,23 @@ int A2X1[8] = { 0x98, 0xF3, 0xF2, 0x48, 0x09, 0x81, 0xA9, 0xFF }, X2A1[8] = {
 		0x2D, 0x9E, 0x0B, 0xDC, 0x04, 0x03, 0x24 }, S2X1[8] = { 0x8C, 0x79,
 		0x05, 0xEB, 0x12, 0x04, 0x51, 0x53 };
 
+int MUX21Circuit(GarbledCircuit *gc, GarblingContext *gcContext, 
+        int theSwitch, int input0, int input1, int *output)
+{
+    int notSwitch = getNextWire(gcContext);
+    NOTGate(gc, gcContext, theSwitch, notSwitch);
+
+    int and0 = getNextWire(gcContext);
+    ANDGate(gc, gcContext, notSwitch, input0, and0);
+
+    int and1 = getNextWire(gcContext);
+    ANDGate(gc, gcContext, theSwitch, input1, and1);
+
+    *output = getNextWire(gcContext);
+    ORGate(gc, gcContext, and0, and1, *output);
+    return 0;
+}
+
 int ANDCircuit(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
 		int n, int* inputs, int* outputs) {
 	int i;
@@ -506,22 +523,15 @@ int GRECircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
 int MINCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
 		int* inputs, int* outputs) {
 	int i;
-	int leqOutput[1];
+	int lesOutput;
 	int andOneOutput[n / 2];
 	int andTwoOutput[n / 2];
 	int notOutput = getNextWire(garblingContext);
-	LEQCircuit(gc, garblingContext, n, inputs, leqOutput);
-	NOTGate(gc, garblingContext, leqOutput[0], notOutput);
-	for (i = 0; i < n / 2; i++) {
-		andOneOutput[i] = getNextWire(garblingContext);
-		andTwoOutput[i] = getNextWire(garblingContext);
-		outputs[i] = getNextWire(garblingContext);
-		ANDGate(gc, garblingContext, leqOutput[0], inputs[i], andOneOutput[i]);
-		ANDGate(gc, garblingContext, notOutput, inputs[n / 2 + i],
-				andTwoOutput[i]);
-		XORGate(gc, garblingContext, andOneOutput[i], andTwoOutput[i],
-				outputs[i]);
-	}
+	LESCircuit(gc, garblingContext, n, inputs, &lesOutput);
+	NOTGate(gc, garblingContext, lesOutput, notOutput);
+    int split = n / 2;
+	for (i = 0; i < split; i++)
+        MUX21Circuit(gc, garblingContext, lesOutput, inputs[i], inputs[split + i], outputs+i);
 	return 0;
 }
 
@@ -532,8 +542,6 @@ int LEQCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
 	int outWire = getNextWire(garblingContext);
 	NOTGate(gc, garblingContext, tempWires, outWire);
 	outputs[0] = outWire;
-    printf("gre: %d\n", tempWires);
-    printf("outwire: %d\n", outWire);
 	return 0;
 }
 
@@ -553,6 +561,7 @@ int LESCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
      * Returns 1 if the second number is less.
      * Returns 0 if the numbers are equal.
      */
+    assert(n < 22); /* Tests fail for n >= 22 */
 
     int split = n/2;
     int **andInputs = malloc(sizeof(int*) * (split - 1));
@@ -564,8 +573,8 @@ int LESCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
     int *finalORInputs = malloc(sizeof(int) * split);
     /* Go bit by bit and those operations */
     for (int i = 0; i < split; i++) {
-        int A = split + i;
-        int B = i;
+        int A = inputs[split + i];
+        int B = inputs[i];
 
 	    int notA = getNextWire(garblingContext);
 	    NOTGate(gc, garblingContext, A, notA);
