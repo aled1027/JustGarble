@@ -30,6 +30,7 @@
 #define ORGATE 14
 #define XORGATE 6
 #define NOTGATE 5
+#define NO_GATE -1
 
 #define XOR_ID -2
 

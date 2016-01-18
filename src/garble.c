@@ -95,7 +95,7 @@ createEmptyGarbledCircuit(GarbledCircuit *gc, int n, int m,
 void
 removeGarbledCircuit(GarbledCircuit *gc)
 {
-	gc->id = getNextId();
+	/* gc->id = getNextId(); */
 	free(gc->garbledGates);
     free(gc->garbledTable);
 	free(gc->wires);
@@ -109,11 +109,14 @@ startBuilding(GarbledCircuit *gc, GarblingContext *ctxt)
 	ctxt->gateIndex = 0;
 	ctxt->R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
 	ctxt->fixedWires = malloc(sizeof(int) * gc->r);
+    for (int i = 0; i < gc->r; ++i) {
+        ctxt->fixedWires[i] = NO_GATE;
+    }
 	gc->globalKey = randomBlock();
 }
 
 void
-finishBuilding(GarbledCircuit *gc, const GarblingContext *ctxt,
+finishBuilding(GarbledCircuit *gc, GarblingContext *ctxt,
                block *outputMap, const int *outputs)
 {
 	for (int i = 0; i < gc->m; i++) {
@@ -134,6 +137,7 @@ finishBuilding(GarbledCircuit *gc, const GarblingContext *ctxt,
         }
 	}
 	gc->q = ctxt->gateIndex;
+    free(ctxt->fixedWires);
 }
 
 void

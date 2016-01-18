@@ -92,7 +92,7 @@ seedRandom(void);
 void
 startBuilding(GarbledCircuit *gc, GarblingContext *ctxt);
 void
-finishBuilding(GarbledCircuit *gc, const GarblingContext *ctxt,
+finishBuilding(GarbledCircuit *gc, GarblingContext *ctxt,
                block *outputMap, const int *outputs);
 
 // Create memory for an empty circuit of the specified size.
