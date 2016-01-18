@@ -43,13 +43,6 @@ dbgBlock(block a)
 	return out;
 }
 
-void
-print_block(block blk)
-{
-    uint64_t *val = (uint64_t *) &blk;
-    printf("%016lx%016lx", val[1], val[0]);
-}
-
 int
 compare(const void * a, const void * b)
 {

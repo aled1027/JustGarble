@@ -99,6 +99,8 @@ finishBuilding(GarbledCircuit *gc, const GarblingContext *ctxt,
 int
 createEmptyGarbledCircuit(GarbledCircuit *garbledCircuit, int n, int m,
                           int q, int r, block *inputLabels);
+void
+removeGarbledCircuit(GarbledCircuit *gc);
 
 //Create memory for 2*n input labels.
 void
