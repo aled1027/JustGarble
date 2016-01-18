@@ -158,7 +158,6 @@ writeCircuitToFile(GarbledCircuit *garbledCircuit, char *fileName);
 int
 readCircuitFromFile(GarbledCircuit *garbledCircuit, char *fileName);
 
-
 #include "garble.h"
 #include "check.h"
 #include "util.h"

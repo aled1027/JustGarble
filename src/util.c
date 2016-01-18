@@ -92,3 +92,16 @@ randomBlock(void)
     randAESBlock(&out, sched);
     return out;
 }
+
+block *
+allocate_blocks(size_t nblocks)
+{
+    block *blks = NULL;;
+    (void) posix_memalign((void **) &blks, 128, sizeof(block) * nblocks);
+    if (blks == NULL) {
+        perror("allocate_blocks");
+        return NULL;
+    } else {
+        return blks;
+    }
+}

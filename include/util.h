@@ -89,5 +89,7 @@ AES_KEY __rand_aes_key;
         inPlaceAES(*out, sched);                                        \
     }
 
+block *
+allocate_blocks(size_t nblocks);
 
 #endif /* UTIL_H_ */

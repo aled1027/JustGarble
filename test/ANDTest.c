@@ -28,11 +28,6 @@ buildCircuit(GarbledCircuit *gc, int n, int nlayers)
 
 
     for (int i = 0; i < nlayers; ++i) {
-        /* for (int j = 0; j < n; ++j) { */
-        /*     wire = getNextWire(&ctxt); */
-        /*     NOTGate(gc, &ctxt, wires[j], wire); */
-        /*     wires[j] = wire; */
-        /* } */
         for (int j = 0; j < n; j += 2) {
             wire = getNextWire(&ctxt);
             ANDGate(gc, &ctxt, wires[j], wires[j+1], wire);
