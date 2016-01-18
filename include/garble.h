@@ -41,6 +41,7 @@ int createNewGate(Gate *gate, Wire *input0, Wire *input1, Wire *output, int type
 int createNewWire(Wire *in, GarblingContext *garblingContext, int id);
 int getNextWire(GarblingContext *garblingContext);
 void removeGarbledCircuit(GarbledCircuit *garbledCircuit);
+void removeGarblingContext(GarblingContext *gctxt);
 
 unsigned long startTime, endTime;
 

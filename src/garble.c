@@ -108,6 +108,12 @@ removeGarbledCircuit(GarbledCircuit *gc)
     free(gc->outputs);
 }
 
+void 
+removeGarblingContext(GarblingContext *gctxt)
+{
+    free(gctxt->fixedWires);
+}
+
 int
 startBuilding(GarbledCircuit *gc, GarblingContext *gctxt)
 {
@@ -117,9 +123,12 @@ startBuilding(GarbledCircuit *gc, GarblingContext *gctxt)
 	block key = randomBlock();
 	gctxt->R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
 	gctxt->fixedWires = (int *) malloc(sizeof(int) * gc->r);
+    memset(gctxt->fixedWires, 0, sizeof (int) * gc->r);
 	gc->globalKey = key;
 	startTime = RDTSC;
 	DKCipherInit(&key, &(gctxt->dkCipherContext));
+
+
 	return 0;
 }
 
