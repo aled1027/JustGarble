@@ -33,21 +33,21 @@ createNewWire(Wire *in, GarblingContext *ctxt, int id)
 	return 0;
 }
 
-static unsigned long currentId = 0;
+/* static unsigned long currentId = 0; */
 
-int
-getNextId(void)
-{
-	currentId++;
-	return currentId;
-}
+/* int */
+/* getNextId(void) */
+/* { */
+/* 	currentId++; */
+/* 	return currentId; */
+/* } */
 
-int
-getFreshId(void)
-{
-	currentId = 0;
-	return currentId;
-}
+/* int */
+/* getFreshId(void) */
+/* { */
+/* 	currentId = 0; */
+/* 	return currentId; */
+/* } */
 
 int
 getNextWire(GarblingContext *garblingContext)
@@ -61,7 +61,7 @@ int
 createEmptyGarbledCircuit(GarbledCircuit *gc, int n, int m,
                           int q, int r, block *inputLabels)
 {
-	gc->id = getNextId();
+	/* gc->id = getNextId(); */
     (void) posix_memalign((void **) &gc->garbledGates, 128, sizeof(GarbledGate) * q);
     (void) posix_memalign((void **) &gc->garbledTable, 128, sizeof(GarbledTable) * q);
     (void) posix_memalign((void **) &gc->wires, 128, sizeof(Wire) * r);
@@ -196,7 +196,7 @@ garbleCircuitHalfGates(GarbledCircuit *gc, block *inputLabels, block *outputMap)
 	block R;
     AES_KEY K;
 
-	gc->id = getFreshId();
+	/* gc->id = getFreshId(); */
 
     R = xorBlocks(gc->wires[0].label0, gc->wires[0].label1);
     /* Set input wire labels */
@@ -306,8 +306,6 @@ garbleCircuitStandard(GarbledCircuit *gc, block *inputLabels,
                   gc->wires[0].label1);
 
 	createInputLabelsWithR(inputLabels, gc->n, R);
-
-	gc->id = getFreshId();
 
 	for (int i = 0; i < 2 * gc->n; i += 2) {
 		gc->wires[i/2].id = i+1;

@@ -51,7 +51,6 @@ typedef struct {
 } GarbledTable;
 
 typedef struct {
-    long id;
 	int n, m, q, r;
 	block* inputLabels, outputLabels;
 	GarbledGate *garbledGates;

@@ -26,7 +26,6 @@ buildCircuit(GarbledCircuit *gc, int n, int nlayers)
     createEmptyGarbledCircuit(gc, n, n, q, r, inputLabels);
     startBuilding(gc, &ctxt);
 
-
     for (int i = 0; i < nlayers; ++i) {
         for (int j = 0; j < n; j += 2) {
             wire = getNextWire(&ctxt);
@@ -89,6 +88,8 @@ test(int n, int nlayers, int times, GarbleType type)
         printf("%lf %lf\n",
                doubleMean(timeGarbleMedians, times),
                doubleMean(timeEvalMedians, times));
+
+    removeGarbledCircuit(&gc);
 }
 
 int
