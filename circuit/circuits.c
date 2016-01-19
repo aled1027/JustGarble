@@ -521,8 +521,6 @@ int MINCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
 		int* inputs, int* outputs) {
 	int i;
 	int lesOutput;
-	int andOneOutput[n / 2];
-	int andTwoOutput[n / 2];
 	int notOutput = getNextWire(garblingContext);
 	LESCircuit(gc, garblingContext, n, inputs, &lesOutput);
 	NOTGate(gc, garblingContext, lesOutput, notOutput);
@@ -609,7 +607,6 @@ int LESCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
     }
 
     /* Final OR Circuit  */
-    int orOutput;
     ORCircuit(gc, garblingContext, split, finalORInputs, outputs);
     for (int i = 0; i < split - 1; i++)
         free(andInputs[i]);
