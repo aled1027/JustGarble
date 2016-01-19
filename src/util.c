@@ -16,13 +16,14 @@
 
 */
 
-#include "../include/common.h"
-#include "../include/util.h"
-#include "../include/justGarble.h"
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <time.h>
 
-static __m128i cur_seed;
+#include "justGarble.h"
+
+/* static __m128i cur_seed; */
 
 int
 countToN(int *a, int n)
@@ -67,41 +68,40 @@ doubleMean(double *values, int n)
 	return total / n;
 }
 
+// This is only for testing and benchmark purposes. Use a more 
+// secure seeding mechanism for actual use.
+int already_initialized = 0;
 void
-srand_sse(unsigned int seed)
+seedRandom(void)
 {
-	cur_seed = _mm_set_epi32(seed, seed + 1, seed, seed + 1);
+    if (!already_initialized) {
+        block cur_seed;
+        already_initialized = 1;
+        __current_rand_index = zero_block();
+        srand(time(NULL));
+        cur_seed = _mm_set_epi32(rand(), rand(), rand(), rand());
+        AES_set_encrypt_key((unsigned char *) &cur_seed, 128, &__rand_aes_key);
+    }
 }
 
 block
-randomBlock()
+randomBlock(void)
 {
-	block cur_seed_split;
-	block multiplier;
-	block adder;
-	block mod_mask;
-	block sra_mask;
-
-	static const unsigned int mult[4] = { 214013, 17405, 214013, 69069 };
-	static const unsigned int gadd[4] = { 2531011, 10395331, 13737667, 1 };
-	static const unsigned int mask[4] = { 0xFFFFFFFF, 0, 0xFFFFFFFF, 0 };
-	static const unsigned int masklo[4] = { 0x00007FFF, 0x00007FFF, 0x00007FFF,
-			0x00007FFF };
-
-	adder = _mm_load_si128((block *) gadd);
-	multiplier = _mm_load_si128((block *) mult);
-	mod_mask = _mm_load_si128((block *) mask);
-	sra_mask = _mm_load_si128((block *) masklo);
-	cur_seed_split = _mm_shuffle_epi32(cur_seed, _MM_SHUFFLE(2, 3, 0, 1));
-	cur_seed = _mm_mul_epu32(cur_seed, multiplier);
-	multiplier = _mm_shuffle_epi32(multiplier, _MM_SHUFFLE(2, 3, 0, 1));
-	cur_seed_split = _mm_mul_epu32(cur_seed_split, multiplier);
-	cur_seed = _mm_and_si128(cur_seed, mod_mask);
-	cur_seed_split = _mm_and_si128(cur_seed_split, mod_mask);
-	cur_seed_split = _mm_shuffle_epi32(cur_seed_split, _MM_SHUFFLE(2, 3, 0, 1));
-	cur_seed = _mm_or_si128(cur_seed, cur_seed_split);
-	cur_seed = _mm_add_epi32(cur_seed, adder);
-
-	return cur_seed;
+    block out;
+    const __m128i *sched = ((__m128i *) (__rand_aes_key.rd_key));
+    randAESBlock(&out, sched);
+    return out;
 }
 
+block *
+allocate_blocks(size_t nblocks)
+{
+    block *blks = NULL;;
+    (void) posix_memalign((void **) &blks, 128, sizeof(block) * nblocks);
+    if (blks == NULL) {
+        perror("allocate_blocks");
+        return NULL;
+    } else {
+        return blks;
+    }
+}

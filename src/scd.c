@@ -16,17 +16,14 @@
 
 */
 
-
-#include "../include/common.h"
-#include "../include/garble.h"
-#include "../include/justGarble.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <msgpack.h>
 #include <malloc.h>
 #include <sys/stat.h>
+
+#include "justGarble.h"
 
 long fsize(const char *filename) {
 	struct stat st;

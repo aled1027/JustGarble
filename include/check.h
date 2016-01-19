@@ -16,14 +16,15 @@
 
 */
 
-
-#include "garble.h"
+#include "justGarble.h"
 
 #ifndef CHECK_H_
 #define CHECK_H_
-int checkCircuit(GarbledCircuit *garbledCircuit, InputLabels inputLabels, OutputMap outputMap,
-		int check(int *a, int *output, int s));
-unsigned long timedEval(GarbledCircuit *garbledCircuit, InputLabels inputLabels);
+
+int
+checkCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
+             block *outputMap, GarbleType type,
+             int check(int *a, int *output, int s));
 
 
 #endif /* CHECK_H_ */

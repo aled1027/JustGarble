@@ -18,13 +18,11 @@
 
 
 #ifndef garble
-#define garble 0
+#define garble 1
 
-#include "common.h"
 #include "justGarble.h"
-#include "dkcipher.h"
 
-
+#define DOUBLE(B) _mm_slli_epi64(B,1)
 
 #define FIXED_ZERO_GATE 0
 #define FIXED_ONE_GATE 15
@@ -32,17 +30,20 @@
 #define ORGATE 14
 #define XORGATE 6
 #define NOTGATE 5
+#define NO_GATE -1
 
-#define TABLE_ID -1
 #define XOR_ID -2
 #define NOT_ID -3
 
-int createNewGate(Gate *gate, Wire *input0, Wire *input1, Wire *output, int type );
-int createNewWire(Wire *in, GarblingContext *garblingContext, int id);
-int getNextWire(GarblingContext *garblingContext);
-void removeGarbledCircuit(GarbledCircuit *garbledCircuit);
-void removeGarblingContext(GarblingContext *gctxt);
-
-unsigned long startTime, endTime;
+int
+createNewGate(Gate *gate, Wire *input0, Wire *input1, Wire *output, int type);
+int
+createNewWire(Wire *in, GarblingContext *garblingContext, int id);
+int
+getNextWire(GarblingContext *garblingContext);
+void
+removeGarbledCircuit(GarbledCircuit *garbledCircuit);
+void
+removeGarblingContext(GarblingContext *gctxt);
 
 #endif

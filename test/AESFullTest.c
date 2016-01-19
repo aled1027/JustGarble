@@ -22,23 +22,21 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
-#include "../include/justGarble.h"
 
-int *final;
+#include "../include/justGarble.h"
+#include "../include/circuits.h"
 
 #define AES_CIRCUIT_FILE_NAME "./aesCircuit"
 
 void
 buildAESCircuit(GarbledCircuit *gc)
 {
-	srand(time(NULL));
-    srand_sse(time(NULL));
 	GarblingContext garblingContext;
 
-	int roundLimit = 1;
+	int roundLimit = 10;
 	int n = 128 * (roundLimit + 1);
 	int m = 128;
-	int q = 50000; //Just an upper bound
+	int q = 36000; //Just an upper bound
 	int r = 50000;
 	int inp[n];
 	countToN(inp, n);
@@ -47,13 +45,10 @@ buildAESCircuit(GarbledCircuit *gc)
 	int subBytesOutputs[n];
 	int shiftRowsOutputs[n];
 	int mixColumnOutputs[n];
-	block labels[2 * n];
-	block outputbs[m];
-	OutputMap outputMap = outputbs;
-	InputLabels inputLabels = labels;
-	int i;
+	block inputLabels[2 * n];
+	block outputMap[m];
 
-	createInputLabels(labels, n);
+	createInputLabels(inputLabels, n);
 	createEmptyGarbledCircuit(gc, n, m, q, r, inputLabels);
 	startBuilding(gc, &garblingContext);
 
@@ -61,31 +56,28 @@ buildAESCircuit(GarbledCircuit *gc)
 
 	for (int round = 0; round < roundLimit; round++) {
 
-		AddRoundKey(gc, &garblingContext, addKeyInputs,
-                    addKeyOutputs);
+		AddRoundKey(gc, &garblingContext, addKeyInputs, addKeyOutputs);
 
-		for (i = 0; i < 16; i++) {
+		for (int i = 0; i < 16; i++) {
 			SubBytes(gc, &garblingContext, addKeyOutputs + 8 * i,
                      subBytesOutputs + 8 * i);
 		}
 
-		ShiftRows(gc, &garblingContext, subBytesOutputs,
-                  shiftRowsOutputs);
+		ShiftRows(gc, &garblingContext, subBytesOutputs, shiftRowsOutputs);
 
-		for (i = 0; i < 4; i++) {
-			if (round == roundLimit - 1)
+		for (int i = 0; i < 4; i++) {
+			if (round != roundLimit - 1)
 				MixColumns(gc, &garblingContext,
                            shiftRowsOutputs + i * 32, mixColumnOutputs + 32 * i);
 		}
-		for (i = 0; i < 128; i++) {
+		for (int i = 0; i < 128; i++) {
 			addKeyInputs[i] = mixColumnOutputs[i];
 			addKeyInputs[i + 128] = (round + 2) * 128 + i;
 		}
 	}
 
-	final = mixColumnOutputs;
-	finishBuilding(gc, &garblingContext, outputMap, final);
-	writeCircuitToFile(gc, AES_CIRCUIT_FILE_NAME);
+	finishBuilding(gc, &garblingContext, outputMap, mixColumnOutputs);
+	/* writeCircuitToFile(gc, AES_CIRCUIT_FILE_NAME); */
 }
 
 int
@@ -94,21 +86,26 @@ main(int argc, char *argv[])
 	int rounds = 10;
 	int n = 128 + (128 * rounds);
 	int m = 128;
+    int times = 100;
 
 	GarbledCircuit aesCircuit;
 	block inputLabels[2 * n];
 	block outputMap[2 * m];
 	int i, j;
 
-	int timeGarble[TIMES];
-	int timeEval[TIMES];
-	double timeGarbleMedians[TIMES];
-	double timeEvalMedians[TIMES];
+	int timeGarble[times];
+	int timeEval[times];
+	double timeGarbleMedians[times];
+	double timeEvalMedians[times];
+
+    GarbleType type = GARBLE_TYPE_STANDARD;
+
+    seedRandom();
 
     buildAESCircuit(&aesCircuit);
 	/* readCircuitFromFile(&aesCircuit, AES_CIRCUIT_FILE_NAME); */
 
-    (void) garbleCircuit(&aesCircuit, inputLabels, outputMap);
+    (void) garbleCircuit(&aesCircuit, inputLabels, outputMap, type);
     {
         block extractedLabels[n];
         block computedOutputMap[m];
@@ -118,22 +115,22 @@ main(int argc, char *argv[])
             inputs[i] = rand() % 2;
         }
         extractLabels(extractedLabels, inputLabels, inputs, n);
-        evaluate(&aesCircuit, extractedLabels, computedOutputMap);
+        evaluate(&aesCircuit, extractedLabels, computedOutputMap, type);
         mapOutputs(outputMap, computedOutputMap, outputVals, m);
     }
 
-	/* for (j = 0; j < TIMES; j++) { */
-	/* 	for (i = 0; i < TIMES; i++) { */
-	/* 		timeGarble[i] = garbleCircuit(&aesCircuit, inputLabels, outputMap); */
-	/* 		timeEval[i] = timedEval(&aesCircuit, inputLabels); */
-	/* 	} */
-	/* 	timeGarbleMedians[j] = ((double) median(timeGarble, TIMES)) */
-    /*         / aesCircuit.q; */
-	/* 	timeEvalMedians[j] = ((double) median(timeEval, TIMES)) / aesCircuit.q; */
-	/* } */
-	/* double garblingTime = doubleMean(timeGarbleMedians, TIMES); */
-	/* double evalTime = doubleMean(timeEvalMedians, TIMES); */
-	/* printf("%lf %lf\n", garblingTime, evalTime); */
+	for (j = 0; j < times; j++) {
+		for (i = 0; i < times; i++) {
+			timeGarble[i] = timedGarble(&aesCircuit, inputLabels, outputMap, type);
+			timeEval[i] = timedEval(&aesCircuit, inputLabels, type);
+		}
+		timeGarbleMedians[j] = ((double) median(timeGarble, times))
+            / aesCircuit.q;
+		timeEvalMedians[j] = ((double) median(timeEval, times)) / aesCircuit.q;
+	}
+	double garblingTime = doubleMean(timeGarbleMedians, times);
+	double evalTime = doubleMean(timeEvalMedians, times);
+	printf("%lf %lf\n", garblingTime, evalTime);
 	return 0;
 }
 
