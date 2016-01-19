@@ -29,8 +29,9 @@ int A2X1[8] = { 0x98, 0xF3, 0xF2, 0x48, 0x09, 0x81, 0xA9, 0xFF }, X2A1[8] = {
 		0x2D, 0x9E, 0x0B, 0xDC, 0x04, 0x03, 0x24 }, S2X1[8] = { 0x8C, 0x79,
 		0x05, 0xEB, 0x12, 0x04, 0x51, 0x53 };
 
-int MUX21Circuit(GarbledCircuit *gc, GarblingContext *gcContext, 
-        int theSwitch, int input0, int input1, int *output)
+int
+MUX21Circuit(GarbledCircuit *gc, GarblingContext *gcContext, 
+             int theSwitch, int input0, int input1, int *output)
 {
     int notSwitch = getNextWire(gcContext);
     NOTGate(gc, gcContext, theSwitch, notSwitch);
@@ -517,8 +518,10 @@ int GRECircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
 
 }
 
-int MINCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
-		int* inputs, int* outputs) {
+int
+MINCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
+           int* inputs, int* outputs)
+{
 	int i;
 	int lesOutput;
 	int notOutput = getNextWire(garblingContext);
@@ -550,13 +553,16 @@ int GEQCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
 	return 0;
 }
 
-int LESCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
-		int* inputs, int* outputs) {
+int
+LESCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
+           int* inputs, int* outputs)
+{
     /* Returns 0 if the first number is less.
      * Returns 1 if the second number is less.
      * Returns 0 if the numbers are equal.
      */
     assert(n < 22); /* Tests fail for n >= 22 */
+    assert(n % 2 == 0);
 
     int split = n/2;
     int **andInputs = malloc(sizeof(int*) * (split - 1));
@@ -597,7 +603,7 @@ int LESCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
             andInputs[j][i-j] = norOutput;
         }
         if (i == split - 1)
-        finalORInputs[split - 1] = case1;
+            finalORInputs[split - 1] = case1;
 	}
 
     /*  Do the aggregate operations with orInputs */
@@ -607,7 +613,11 @@ int LESCircuit(GarbledCircuit *gc, GarblingContext *garblingContext, int n,
     }
 
     /* Final OR Circuit  */
-    ORCircuit(gc, garblingContext, split, finalORInputs, outputs);
+    if (split == 1) {
+        outputs[0] = finalORInputs[0];
+    } else {
+        ORCircuit(gc, garblingContext, split, finalORInputs, outputs);
+    }
     for (int i = 0; i < split - 1; i++)
         free(andInputs[i]);
     free(andInputs);
@@ -704,6 +714,7 @@ ORCircuit(GarbledCircuit *garbledCircuit, GarblingContext *garblingContext,
           int n, int *inputs, int *outputs)
 {
 	int oldInternalWire = getNextWire(garblingContext);
+    assert(n >= 2);
 	ORGate(garbledCircuit, garblingContext, inputs[0], inputs[1],
            oldInternalWire);
 	for (int i = 2; i < n - 1; i++) {
