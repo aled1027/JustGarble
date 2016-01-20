@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "../include/justGarble.h"
-#include "../include/gates.h"
+#include "justGarble.h"
+#include "garble.h"
+#include "gates.h"
 
 void
 buildCircuit(GarbledCircuit *gc, int n, int nlayers)
@@ -44,6 +45,7 @@ test(int n, int nlayers, int times, GarbleType type)
 
     block inputLabels[2 * n];
     block outputLabels[2 * n];
+    block extractedLabels[n];
 
     int timeGarble[times];
     int timeEval[times];
@@ -55,22 +57,21 @@ test(int n, int nlayers, int times, GarbleType type)
     buildCircuit(&gc, n, nlayers);
     (void) garbleCircuit(&gc, inputLabels, outputLabels, type);
     {
-        block extractedLabels[n];
-        block computedOutputMap[n];
-        int inputs[n];
-        int outputs[n];
+        block computedOutputMap[gc.n];
+        int inputs[gc.n];
+        int outputs[gc.n];
 
         printf("Input:  ");
-        for (int i = 0; i < n; ++i) {
+        for (int i = 0; i < gc.n; ++i) {
             inputs[i] = rand() % 2;
             printf("%d", inputs[i]);
         }
         printf("\n");
-        extractLabels(extractedLabels, inputLabels, inputs, n);
+        extractLabels(extractedLabels, inputLabels, inputs, gc.n);
         evaluate(&gc, extractedLabels, computedOutputMap, type);
-        mapOutputs(outputLabels, computedOutputMap, outputs, n);
+        mapOutputs(outputLabels, computedOutputMap, outputs, gc.n);
         printf("Output: ");
-        for (int i = 0; i < n; ++i) {
+        for (int i = 0; i < gc.n; ++i) {
             printf("%d", outputs[i]);
         }
         printf("\n");

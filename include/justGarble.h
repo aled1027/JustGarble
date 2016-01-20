@@ -16,9 +16,9 @@
 
 */
 
-
 #ifndef justGarble
 #define justGarble 1
+
 #include "common.h"
 
 typedef enum {
@@ -27,22 +27,16 @@ typedef enum {
 } GarbleType;
 
 typedef struct {
-	long value, id;
-	block label, label0, label1;
+	block label0, label1;
 } Wire;
 
 typedef struct {
-    long id;
-	block label;
-} GarbledWire;
+    long idx;
+    block label;
+} FixedWire;
 
 typedef struct {
-	long type, id; 
-	Wire *input0, *input1, *output;
-} Gate;
-
-typedef struct {
-    int id, type;
+    int type;
 	long input0, input1, output;
 } GarbledGate;
 
@@ -52,11 +46,12 @@ typedef struct {
 
 typedef struct {
 	int n, m, q, r;
-	block* inputLabels, outputLabels;
-	GarbledGate *garbledGates;
-	GarbledTable *garbledTable;
-	Wire *wires;
-	int *outputs;
+	GarbledGate *garbledGates;  /* q */
+	GarbledTable *garbledTable; /* q */
+	Wire *wires;                /* r */
+    FixedWire *fixedWires;
+    int nFixedWires;
+	int *outputs;               /* m */
 	block globalKey;
 } GarbledCircuit;
 
@@ -64,12 +59,22 @@ typedef struct {
 typedef struct {
 	long wireIndex, gateIndex;
 	int *fixedWires;
+    int nFixedWires;
 	block R;
 } GarblingContext;
 
-/* typedef block* InputLabels; */
-/* typedef block* ExtractedLabels; */
-/* typedef block* OutputMap; */
+#define DOUBLE(B) _mm_slli_epi64(B,1)
+
+#define FIXED_ZERO_GATE 0
+#define FIXED_ONE_GATE 15
+#define ANDGATE 8
+#define ORGATE 14
+#define XORGATE 6
+#define NOTGATE 5
+#define NO_GATE -1
+
+#define XOR_ID -2
+#define NOT_ID -3
 
 void
 seedRandom(void);
@@ -96,8 +101,8 @@ finishBuilding(GarbledCircuit *gc, GarblingContext *ctxt,
 
 // Create memory for an empty circuit of the specified size.
 int
-createEmptyGarbledCircuit(GarbledCircuit *garbledCircuit, int n, int m,
-                          int q, int r, block *inputLabels);
+createEmptyGarbledCircuit(GarbledCircuit *gc, int n, int m, int q, int r,
+                          block *inputLabels);
 void
 removeGarbledCircuit(GarbledCircuit *gc);
 
@@ -127,38 +132,27 @@ unsigned long
 timedGarble(GarbledCircuit *gc, block *inputLabels, block *outputMap,
             GarbleType type);
 
-//Evaluate a garbled circuit, using n input labels in the Extracted Labels
-//to return m output labels. The garbled circuit might be generated either in 
-//one piece, as the result of running garbleCircuit, or may be pieced together,
-// by building the circuit (startBuilding ... finishBuilding), and adding 
-// garbledTable from another source, say, a network transmission.
 void
-evaluate(GarbledCircuit *gc, block *extractedLabels, block *outputMap,
-         GarbleType type);
+extractLabels(block *extractedLabels, const block *labels, const int *bits,
+              long n);
+void
+evaluate(const GarbledCircuit *gc, const block *extractedLabels,
+         block *outputLabels, GarbleType type);
 unsigned long
-timedEval(GarbledCircuit *gc, block *inputLabels, GarbleType type);
-
-// A simple function that selects n input labels from 2n labels, using the 
-// inputBits array where each element is a bit.
-void
-extractLabels(block *extractedLabels, const block *inputLabels,
-              const int *inputBits, int n);
+timedEval(const GarbledCircuit *gc, const block *inputLabels, GarbleType type);
 
 // A simple function that takes 2m output labels, m labels from evaluate, 
 // and returns a m bit output by matching the labels. If one or more of the
 // m evaluated labels donot match either of the two corresponding output labels,
 // then the function flags an error.
 int
-mapOutputs(const block *outputMap, const block *extractedMap, int *outputVals,
-           int m);
+mapOutputs(const block *outputLabels, const block *outputMap, int *vals, int m);
 
 int
-writeCircuitToFile(GarbledCircuit *garbledCircuit, char *fileName);
+writeCircuitToFile(GarbledCircuit *gc, char *fileName);
 int
-readCircuitFromFile(GarbledCircuit *garbledCircuit, char *fileName);
+readCircuitFromFile(GarbledCircuit *gc, char *fileName);
 
-#include "garble.h"
-#include "check.h"
 #include "util.h"
 
 #endif

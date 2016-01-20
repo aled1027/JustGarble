@@ -111,52 +111,8 @@ AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 	return 0;
 }
 
-/* void AES_set_decrypt_key_fast(AES_KEY *dkey, const AES_KEY *ekey) { */
-/* 	int j = 0; */
-/* 	int i = ROUNDS(ekey); */
-/* #if (OCB_KEY_LEN == 0) */
-/* 	dkey->rounds = i; */
-/* #endif */
-/* 	dkey->rd_key[i--] = ekey->rd_key[j++]; */
-/* 	while (i) */
-/* 		dkey->rd_key[i--] = _mm_aesimc_si128(ekey->rd_key[j++]); */
-/* 	dkey->rd_key[i] = ekey->rd_key[j]; */
-/* } */
-
-/* int AES_set_decrypt_key(const unsigned char *userKey, const int bits, */
-/* 		AES_KEY *key) { */
-/* 	AES_KEY temp_key; */
-/* 	AES_set_encrypt_key(userKey, bits, &temp_key); */
-/* 	AES_set_decrypt_key_fast(key, &temp_key); */
-/* 	return 0; */
-/* } */
-
-/* void AES_encrypt(const unsigned char *in, unsigned char *out, */
-/* 		const AES_KEY *key) { */
-/* 	int j, rnds = ROUNDS(key); */
-/* 	const __m128i *sched = ((__m128i *) (key->rd_key)); */
-/* 	__m128i tmp = _mm_load_si128((__m128i *) in); */
-/* 	tmp = _mm_xor_si128(tmp, sched[0]); */
-/* 	for (j = 1; j < rnds; j++) */
-/* 		tmp = _mm_aesenc_si128(tmp, sched[j]); */
-/* 	tmp = _mm_aesenclast_si128(tmp, sched[j]); */
-/* 	_mm_store_si128((__m128i *) out, tmp); */
-/* } */
-
-/* void AES_decrypt(const unsigned char *in, unsigned char *out, */
-/* 		const AES_KEY *key) { */
-/* 	int j, rnds = ROUNDS(key); */
-/* 	const __m128i *sched = ((__m128i *) (key->rd_key)); */
-/* 	__m128i tmp = _mm_load_si128((__m128i *) in); */
-/* 	tmp = _mm_xor_si128(tmp, sched[0]); */
-/* 	for (j = 1; j < rnds; j++) */
-/* 		tmp = _mm_aesdec_si128(tmp, sched[j]); */
-/* 	tmp = _mm_aesdeclast_si128(tmp, sched[j]); */
-/* 	_mm_store_si128((__m128i *) out, tmp); */
-/* } */
-
 void
-AES_ecb_encrypt_blks(block *blks, unsigned nblks, AES_KEY *key)
+AES_ecb_encrypt_blks(block *blks, unsigned nblks, const AES_KEY *key)
 {
 	unsigned i, j, rnds = ROUNDS(key);
 	const __m128i *sched = ((__m128i *) (key->rd_key));
@@ -168,35 +124,3 @@ AES_ecb_encrypt_blks(block *blks, unsigned nblks, AES_KEY *key)
 	for (i = 0; i < nblks; ++i)
 		blks[i] = _mm_aesenclast_si128(blks[i], sched[j]);
 }
-
-/* void AES_ecb_encrypt_blks_4(block *blks, AES_KEY *key) { */
-/* 	unsigned j, rnds = ROUNDS(key); */
-/* 	const __m128i *sched = ((__m128i *) (key->rd_key)); */
-/* 	blks[0] = _mm_xor_si128(blks[0], sched[0]); */
-/* 	blks[1] = _mm_xor_si128(blks[1], sched[0]); */
-/* 	blks[2] = _mm_xor_si128(blks[2], sched[0]); */
-/* 	blks[3] = _mm_xor_si128(blks[3], sched[0]); */
-
-/* 	for (j = 1; j < rnds; ++j){ */
-/* 		blks[0] = _mm_aesenc_si128(blks[0], sched[j]); */
-/* 		blks[1] = _mm_aesenc_si128(blks[1], sched[j]); */
-/* 		blks[2] = _mm_aesenc_si128(blks[2], sched[j]); */
-/* 		blks[3] = _mm_aesenc_si128(blks[3], sched[j]); */
-/* 	} */
-/* 	blks[0] = _mm_aesenclast_si128(blks[0], sched[j]); */
-/* 	blks[1] = _mm_aesenclast_si128(blks[1], sched[j]); */
-/* 	blks[2] = _mm_aesenclast_si128(blks[2], sched[j]); */
-/* 	blks[3] = _mm_aesenclast_si128(blks[3], sched[j]); */
-/* } */
-
-/* void AES_ecb_decrypt_blks(block *blks, unsigned nblks, AES_KEY *key) { */
-/* 	unsigned i, j, rnds = ROUNDS(key); */
-/* 	const __m128i *sched = ((__m128i *) (key->rd_key)); */
-/* 	for (i = 0; i < nblks; ++i) */
-/* 		blks[i] = _mm_xor_si128(blks[i], sched[0]); */
-/* 	for (j = 1; j < rnds; ++j) */
-/* 		for (i = 0; i < nblks; ++i) */
-/* 			blks[i] = _mm_aesdec_si128(blks[i], sched[j]); */
-/* 	for (i = 0; i < nblks; ++i) */
-/* 		blks[i] = _mm_aesdeclast_si128(blks[i], sched[j]); */
-/* } */

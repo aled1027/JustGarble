@@ -17,68 +17,55 @@
 */
 
 #include "justGarble.h"
+#include "garble.h"
 #include "gates.h"
 
-int
+static int
 genericGate(GarbledCircuit *gc, GarblingContext *ctxt,
-            int input0, int input1, int output, int *vals, int type)
+            int input0, int input1, int output, int type)
 {
+    GarbledGate *gg;
+
 	createNewWire(&gc->wires[output], ctxt, output);
 
-	GarbledGate *garbledGate = &gc->garbledGates[ctxt->gateIndex];
-
-	garbledGate->id = ctxt->gateIndex;
-	garbledGate->type = type;
-	garbledGate->input0 = input0;
-	garbledGate->input1 = input1;
-	garbledGate->output = output;
+	gg = &gc->garbledGates[ctxt->gateIndex];
 
 	ctxt->gateIndex++;
+	gg->type = type;
+	gg->input0 = input0;
+	gg->input1 = input1;
+	gg->output = output;
 
-	return garbledGate->id;
+    return 0;
 }
 
 int
 ANDGate(GarbledCircuit *gc, GarblingContext *ctxt,
         int input0, int input1, int output)
 {
-	int vals[] = { 0, 0, 0, 1 };
-	return genericGate(gc, ctxt, input0, input1, output, vals, ANDGATE);
+	return genericGate(gc, ctxt, input0, input1, output, ANDGATE);
 }
 
 int
 XORGate(GarbledCircuit *gc, GarblingContext *ctxt,
         int input0, int input1, int output)
 {
-	if (gc->wires[input0].id == 0) {
-		printf("ERROR: Uninitialized input at wire 0 %d, gate %ld\n",
-               input0, ctxt->gateIndex);
-        return -1;
-	}
-	if (gc->wires[input1].id == 0) {
-		printf("ERROR: Uninitialized input at wire 1 %d, gate %ld\n",
-               input1, ctxt->gateIndex);
-        return -1;
-	}
-	if (gc->wires[output].id != 0) {
-		printf("ERROR: Reusing output at wire %d\n", output);
-        return -1;
-	}
-	createNewWire(&(gc->wires[output]), ctxt, output);
+    GarbledGate *gg;
+
+	createNewWire(&gc->wires[output], ctxt, output);
 
 	gc->wires[output].label0 = xorBlocks(gc->wires[input0].label0,
                                          gc->wires[input1].label0);
 	gc->wires[output].label1 = xorBlocks(gc->wires[input0].label1,
                                          gc->wires[input1].label0);
-	GarbledGate *garbledGate = &(gc->garbledGates[ctxt->gateIndex]);
-	if (garbledGate->id != 0)
-        dbgs("Reusing a gate");
-	garbledGate->id = XOR_ID;
-	garbledGate->type = XORGATE;
-	ctxt->gateIndex++;
-	garbledGate->input0 = input0;
-	garbledGate->input1 = input1;
-	garbledGate->output = output;
+
+	gg = &gc->garbledGates[ctxt->gateIndex];
+
+    ctxt->gateIndex++;
+	gg->type = XORGATE;
+	gg->input0 = input0;
+	gg->input1 = input1;
+	gg->output = output;
 
 	return 0;
 }
@@ -87,21 +74,18 @@ int
 ORGate(GarbledCircuit *gc, GarblingContext *ctxt,
        int input0, int input1, int output)
 {
-	int vals[] = { 0, 1, 1, 1 };
-	return genericGate(gc, ctxt, input0, input1, output, vals, ORGATE);
+	return genericGate(gc, ctxt, input0, input1, output, ORGATE);
 }
 
 int
 fixedZeroWire(GarbledCircuit *gc, GarblingContext *ctxt)
 {
-	int ind = getNextWire(ctxt);
+    int ind;
+    Wire *wire;
+    
+	ind = getNextWire(ctxt);
 	ctxt->fixedWires[ind] = FIXED_ZERO_GATE;
-	Wire *wire = &gc->wires[ind];
-	if (wire->id != 0) {
-		printf("ERROR: Reusing output at wire %d\n", ind);
-        return -1;
-    }
-	wire->id = ind;
+	wire = &gc->wires[ind];
 	wire->label0 = randomBlock();
 	wire->label1 = xorBlocks(ctxt->R, wire->label0);
 	return ind;
@@ -110,10 +94,12 @@ fixedZeroWire(GarbledCircuit *gc, GarblingContext *ctxt)
 int
 fixedOneWire(GarbledCircuit *gc, GarblingContext *ctxt)
 {
-	int ind = getNextWire(ctxt);
+    int ind;
+    Wire *wire;
+    
+	ind = getNextWire(ctxt);
 	ctxt->fixedWires[ind] = FIXED_ONE_GATE;
-	Wire *wire = &gc->wires[ind];
-	wire->id = ind;
+	wire = &gc->wires[ind];
 	wire->label0 = randomBlock();
 	wire->label1 = xorBlocks(ctxt->R, wire->label0);
 	return ind;
@@ -123,7 +109,6 @@ int
 NOTGate(GarbledCircuit *gc, GarblingContext *ctxt,
 		int input0, int output)
 {
-	int vals[] = { 1, 0, 1, 0 };
-	return genericGate(gc, ctxt, input0, input0, output, vals, NOTGATE);
+	return genericGate(gc, ctxt, input0, input0, output, NOTGATE);
 }
 

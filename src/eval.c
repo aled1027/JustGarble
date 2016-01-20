@@ -23,7 +23,7 @@
 #include "aes.h"
 
 static void
-hash1(block *A, const block tweak, AES_KEY *K)
+hash1(block *A, block tweak, const AES_KEY *K)
 {
     block key;
     block mask;
@@ -35,7 +35,8 @@ hash1(block *A, const block tweak, AES_KEY *K)
 }
 
 static void
-hash2(block *A, block *B, const block tweak1, const block tweak2, AES_KEY *key)
+hash2(block *A, block *B, block tweak1, block tweak2,
+      const AES_KEY *key)
 {
     block keys[2];
     block masks[2];
@@ -49,42 +50,30 @@ hash2(block *A, block *B, const block tweak1, const block tweak2, AES_KEY *key)
     *B = xorBlocks(keys[1], masks[1]);
 }
 
-static int
-evaluateHalfGates(GarbledCircuit *gc, block *extractedLabels, block *outputMap)
+static void
+evaluateHalfGates(const GarbledCircuit *gc, block *wireLabels, const AES_KEY *K)
 {
-    AES_KEY K;
-
-	AES_set_encrypt_key((unsigned char *) &gc->globalKey, 128, &K);
-
-    /* Set input wire labels */
-	for (long i = 0; i < gc->n; i++) {
-		gc->wires[i].label = extractedLabels[i];
-	}
-
-    /* Process garbled gates */
 	for (long i = 0; i < gc->q; i++) {
 		GarbledGate *gg = &gc->garbledGates[i];
 		if (gg->type == XORGATE) {
-			gc->wires[gg->output].label
-                = xorBlocks(gc->wires[gg->input0].label,
-                            gc->wires[gg->input1].label);
+			wireLabels[gg->output] =
+                xorBlocks(wireLabels[gg->input0], wireLabels[gg->input1]);
 		} else if (gg->type == NOTGATE) {
             block A, tweak;
             unsigned short pa;
 
-            A = gc->wires[gg->input0].label;
+            A = wireLabels[gg->input0];
             tweak = makeBlock(2 * i, (long) 0);
             pa = getLSB(A);
-            hash1(&A, tweak, &K);
-            gc->wires[gg->output].label =
-                xorBlocks(A, gc->garbledTable[i].table[pa]);
+            hash1(&A, tweak, K);
+            wireLabels[gg->output] = xorBlocks(A, gc->garbledTable[i].table[pa]);
         } else {
             block A, B, W;
             int sa, sb;
             block tweak1, tweak2;
 
-            A = gc->wires[gg->input0].label;
-            B = gc->wires[gg->input1].label;
+            A = wireLabels[gg->input0];
+            B = wireLabels[gg->input1];
 
             sa = getLSB(A);
             sb = getLSB(B);
@@ -92,111 +81,141 @@ evaluateHalfGates(GarbledCircuit *gc, block *extractedLabels, block *outputMap)
             tweak1 = makeBlock(2 * i, (long) 0);
             tweak2 = makeBlock(2 * i + 1, (long) 0);
 
-            hash2(&A, &B, tweak1, tweak2, &K);
+            hash2(&A, &B, tweak1, tweak2, K);
 
             W = xorBlocks(A, B);
             if (sa)
                 W = xorBlocks(W, gc->garbledTable[i].table[0]);
             if (sb) {
                 W = xorBlocks(W, gc->garbledTable[i].table[1]);
-                W = xorBlocks(W, gc->wires[gg->input0].label);
+                W = xorBlocks(W, wireLabels[gg->input0]);
             }
-            gc->wires[gg->output].label = W;
+            wireLabels[gg->output] = W;
         }
 	}
-    /* Set output wire labels */
-	for (long i = 0; i < gc->m; i++) {
-		outputMap[i] = gc->wires[gc->outputs[i]].label;
-	}
-	return 0;
 }
 
-static int
-evaluateStandard(GarbledCircuit *gc, block *extractedLabels,
-                 block *outputMap)
+static void
+evaluateStandard(const GarbledCircuit *gc, block *wireLabels, AES_KEY *K)
 {
-    block zer = zero_block();
-    AES_KEY K;
-
-    AES_set_encrypt_key((unsigned char *) &gc->globalKey, 128, &K);
-
-    /* Set input wire labels */
-	for (long i = 0; i < gc->n; i++) {
-		gc->wires[i].label = extractedLabels[i];
-	}
-    /* Process garbled gates */
 	for (long i = 0; i < gc->q; i++) {
 		GarbledGate *gg = &gc->garbledGates[i];
 		if (gg->type == XORGATE) {
-			gc->wires[gg->output].label =
-                xorBlocks(gc->wires[gg->input0].label,
-                          gc->wires[gg->input1].label);
+			wireLabels[gg->output] =
+                xorBlocks(wireLabels[gg->input0], wireLabels[gg->input1]);
 		} else {
             block A, B, tmp, tweak, val;
             int a, b;
 
-            A = DOUBLE(gc->wires[gg->input0].label);
-            B = DOUBLE(DOUBLE(gc->wires[gg->input1].label));
+            A = DOUBLE(wireLabels[gg->input0]);
+            B = DOUBLE(DOUBLE(wireLabels[gg->input1]));
 
-            a = getLSB(gc->wires[gg->input0].label);
-            b = getLSB(gc->wires[gg->input1].label);
+            a = getLSB(wireLabels[gg->input0]);
+            b = getLSB(wireLabels[gg->input1]);
 
             val = xorBlocks(A, B);
             tweak = makeBlock(i, (long) 0);
             val = xorBlocks(val, tweak);
-            if (a+b==0)
-                tmp = zer;
-            else
-                tmp = gc->garbledTable[i].table[2*a+b-1];
+            if (a + b == 0) {
+                tmp = val;
+            } else {
+                tmp = xorBlocks(gc->garbledTable[i].table[2*a+b-1], val);
+            }
+            AES_ecb_encrypt_blks(&val, 1, K);
 
-            tmp = xorBlocks(tmp, val);
-            AES_ecb_encrypt_blks(&val, 1, &K);
-
-            gc->wires[gg->output].label = xorBlocks(val, tmp);
+            wireLabels[gg->output] = xorBlocks(val, tmp);
         }
 	}
-    /* Set output wire labels */
-	for (long i = 0; i < gc->m; i++) {
-		outputMap[i] = gc->wires[gc->outputs[i]].label;
-	}
-	return 0;
 }
 
 void
-evaluate(GarbledCircuit *gc, block *extractedLabels, block *outputMap,
-         GarbleType type)
+evaluate(const GarbledCircuit *gc, const block *extractedLabels,
+         block *outputLabels, GarbleType type)
 {
+    AES_KEY K;
+    block *wireLabels;
+
+	AES_set_encrypt_key((unsigned char *) &gc->globalKey, 128, &K);
+    wireLabels = allocate_blocks(gc->r);
+
+    /* Set input wire labels */
+	for (long i = 0; i < gc->n; ++i) {
+        wireLabels[i] = extractedLabels[i];
+	}
+
+    /* Set fixed wire labels */
+    for (long i = 0; i < gc->nFixedWires; ++i) {
+        wireLabels[gc->fixedWires[i].idx] = gc->fixedWires[i].label;
+    }
+
+    /* Process gates */
     switch (type) {
     case GARBLE_TYPE_STANDARD:
-        evaluateStandard(gc, extractedLabels, outputMap);
+        evaluateStandard(gc, wireLabels, &K);
         break;
     case GARBLE_TYPE_HALFGATES:
-        evaluateHalfGates(gc, extractedLabels, outputMap);
+        evaluateHalfGates(gc, wireLabels, &K);
         break;
     default:
         assert(0);
-        exit(1);
+        abort();
+    }
+
+    /* Set output wire labels */
+	for (long i = 0; i < gc->m; i++) {
+		outputLabels[i] = wireLabels[gc->outputs[i]];
+	}
+
+    free(wireLabels);
+}
+
+void
+extractLabels(block *extractedLabels, const block *labels, const int *bits,
+              long n)
+{
+    for (long i = 0; i < n; ++i) {
+        extractedLabels[i] = labels[2 * i + (bits[i] ? 1 : 0)];
     }
 }
 
-unsigned long
-timedEval(GarbledCircuit *garbledCircuit, block *inputLabels,
-          GarbleType type)
+static int
+blockEqual(block a, block b)
 {
-	int n = garbledCircuit->n;
-	int m = garbledCircuit->m;
-	block extractedLabels[n];
-	block outputs[m];
-	int inputs[n];
-	unsigned long startTime, endTime;
-
-	for (int i = 0; i < n; i++) {
-		inputs[i] = rand() % 2;
-	}
-	extractLabels(extractedLabels, inputLabels, inputs, n);
-	startTime = RDTSC;
-	evaluate(garbledCircuit, extractedLabels, outputs, type);
-	endTime = RDTSC;
-    return endTime - startTime;
+	long *ap = (long*) &a;
+	long *bp = (long*) &b;
+	return ((ap[0] == bp[0]) && (ap[1] == bp[1]));
 }
 
+int
+mapOutputs(const block *outputLabels, const block *outputMap, int *vals, int m)
+{
+	for (int i = 0; i < m; i++) {
+		if (blockEqual(outputMap[i], outputLabels[2 * i])) {
+			vals[i] = 0;
+        } else if (blockEqual(outputMap[i], outputLabels[2 * i + 1])) {
+			vals[i] = 1;
+		} else {
+            printf("MAP FAILED %d\n", i);
+            return FAILURE;
+        }
+	}
+	return SUCCESS;
+}
+
+unsigned long
+timedEval(const GarbledCircuit *gc, const block *inputLabels, GarbleType type)
+{
+    block extractedLabels[gc->n];
+	block outputMap[gc->m];
+	int inputs[gc->n];
+	unsigned long start;
+
+	for (int i = 0; i < gc->n; ++i) {
+		inputs[i] = rand() % 2;
+	}
+
+	start = RDTSC;
+    extractLabels(extractedLabels, inputLabels, inputs, gc->n);
+	evaluate(gc, extractedLabels, outputMap, type);
+    return RDTSC - start;
+}

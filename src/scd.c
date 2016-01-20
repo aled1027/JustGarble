@@ -16,6 +16,8 @@
 
 */
 
+#include "justGarble.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -23,19 +25,18 @@
 #include <malloc.h>
 #include <sys/stat.h>
 
-#include "justGarble.h"
-
-long fsize(const char *filename) {
+long
+fsize(const char *filename)
+{
 	struct stat st;
 
 	if (stat(filename, &st) == 0)
 		return st.st_size;
-
 	return -1;
 }
 
 int
-writeCircuitToFile(GarbledCircuit *garbledCircuit, char *fileName)
+writeCircuitToFile(GarbledCircuit *gc, char *fileName)
 {
 	FILE *f = fopen(fileName, "wb");
 	if (f == NULL) {
@@ -45,9 +46,9 @@ writeCircuitToFile(GarbledCircuit *garbledCircuit, char *fileName)
 	msgpack_sbuffer* buffer = msgpack_sbuffer_new();
 	msgpack_packer* pk = msgpack_packer_new(buffer, msgpack_sbuffer_write);
 	msgpack_sbuffer_clear(buffer);
-	int n = garbledCircuit->n;
-	int q = garbledCircuit->q;
-	int m = garbledCircuit->m;
+	int n = gc->n;
+	int q = gc->q;
+	int m = gc->m;
 	GarbledGate *garbledGate;
 	msgpack_pack_array(pk, 3 + 3 * q + m);
 	msgpack_pack_int(pk, n);
@@ -55,19 +56,19 @@ writeCircuitToFile(GarbledCircuit *garbledCircuit, char *fileName)
 	msgpack_pack_int(pk, q);
 	int i;
 	for (i = 0; i < q; i++) {
-		garbledGate = &(garbledCircuit->garbledGates[i]);
+		garbledGate = &(gc->garbledGates[i]);
 		msgpack_pack_int(pk, garbledGate->input0);
 	}
 	for (i = 0; i < q; i++) {
-		garbledGate = &(garbledCircuit->garbledGates[i]);
+		garbledGate = &(gc->garbledGates[i]);
 		msgpack_pack_int(pk, garbledGate->input1);
 	}
 	for (i = 0; i < q; i++) {
-		garbledGate = &(garbledCircuit->garbledGates[i]);
+		garbledGate = &(gc->garbledGates[i]);
 		msgpack_pack_int(pk, garbledGate->type);
 	}
 	for (i = 0; i < m; i++) {
-		msgpack_pack_int(pk, garbledCircuit->outputs[i]);
+		msgpack_pack_int(pk, gc->outputs[i]);
 
 	}
 	fwrite(buffer->data, (buffer->size), 1, f);
@@ -75,7 +76,7 @@ writeCircuitToFile(GarbledCircuit *garbledCircuit, char *fileName)
 	return SUCCESS;
 }
 
-int readCircuitFromFile(GarbledCircuit *garbledCircuit, char *fileName) {
+int readCircuitFromFile(GarbledCircuit *gc, char *fileName) {
 	int fs = fsize(fileName);
 	FILE *f = fopen(fileName, "rb");
 	if (f == NULL) {
@@ -98,48 +99,44 @@ int readCircuitFromFile(GarbledCircuit *garbledCircuit, char *fileName) {
 	int m = (*p).via.i64;
 	++p;
 	int q = (*p).via.i64;
-	garbledCircuit->m = m;
-	garbledCircuit->n = n;
-	garbledCircuit->q = q;
-	garbledCircuit->r = n+q+2;
+	gc->m = m;
+	gc->n = n;
+	gc->q = q;
+	gc->r = n+q+2;
 
-    (void) posix_memalign((void **) &garbledCircuit->outputs,
+    (void) posix_memalign((void **) &gc->outputs,
                           128, sizeof(int) * m);
-    (void) posix_memalign((void **) &garbledCircuit->garbledGates,
+    (void) posix_memalign((void **) &gc->garbledGates,
                           128, sizeof(GarbledGate) * q);
-    (void) posix_memalign((void **) &garbledCircuit->garbledTable,
+    (void) posix_memalign((void **) &gc->garbledTable,
                           128, sizeof(GarbledTable) * q);
-    (void) posix_memalign((void **) &garbledCircuit->wires,
-                          128, sizeof(Wire) * garbledCircuit->r);
-	if (garbledCircuit->garbledGates == NULL
-			|| garbledCircuit->garbledTable == NULL
-			|| garbledCircuit->wires == NULL) {
+    (void) posix_memalign((void **) &gc->wires,
+                          128, sizeof(Wire) * gc->r);
+	if (gc->garbledGates == NULL
+			|| gc->garbledTable == NULL
+			|| gc->wires == NULL) {
 		printf("Linux is a cheap miser that refuses to give us memory\n");
 		return FAILURE;
 	}
 	int i;
-	for (i = 0; i < garbledCircuit->r; i++) {
-		garbledCircuit->wires[i].id = 0;
-	}
 	for (i = 0; i < q; i++) {
-		garbledCircuit->garbledGates[i].id = 0;
-		garbledCircuit->garbledGates[i].output = n+i+1;
+		gc->garbledGates[i].output = n+i+1;
        }
 	for (i = 0; i < q; i++) {
 		++p;
-		garbledCircuit->garbledGates[i].input0 = (*p).via.i64;
+		gc->garbledGates[i].input0 = (*p).via.i64;
 	}
 	for (i = 0; i < q; i++) {
 		++p;
-		garbledCircuit->garbledGates[i].input1 = (*p).via.i64;
+		gc->garbledGates[i].input1 = (*p).via.i64;
 	}
 	for (i = 0; i < q; i++) {
 		++p;
-		garbledCircuit->garbledGates[i].type = (*p).via.i64;
+		gc->garbledGates[i].type = (*p).via.i64;
 	}
 	for (i = 0; i < m; i++) {
 		++p;
-		garbledCircuit->outputs[i] = (*p).via.i64;
+		gc->outputs[i] = (*p).via.i64;
 	}
 	return SUCCESS;
 }

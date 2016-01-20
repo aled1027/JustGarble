@@ -19,31 +19,30 @@
 #include "justGarble.h"
 
 int
-checkCircuit(GarbledCircuit *garbledCircuit, block *inputLabels,
-             block *outputMap, GarbleType type,
-             int check(int *a, int *out, int s))
+checkCircuit(GarbledCircuit *gc, block *inputLabels, block *outputMap,
+             GarbleType type, int check(int *a, int *out, int s))
 {
-	int i, j;
-	int n = garbledCircuit->n;
-	int m = garbledCircuit->m;
-	block extractedLabels[n];
+	int j;
+	int n = gc->n;
+	int m = gc->m;
 	block computedOutputMap[m];
+    block extractedLabels[n];
 	int outputVals[m];
 	int outputReal[m];
 	int inputs[n];
 
-	for (i = 0; i < TIMES; i++) {
-		for (j = 0; j < n; j++) {
-			inputs[j] = rand() % 2;
-		}
-		extractLabels(extractedLabels, inputLabels, inputs, n);
-		evaluate(garbledCircuit, extractedLabels, computedOutputMap, type);
-		mapOutputs(outputMap, computedOutputMap, outputVals, m);
-		check(inputs, outputReal, n);
-		for (j = 0; j < m; j++)
-			if (outputVals[j] != outputReal[j]) {
-				fprintf(stderr, "Check failed %u \n", j);
-			}
-	}
+    for (j = 0; j < n; j++) {
+        inputs[j] = rand() % 2;
+    }
+    extractLabels(extractedLabels, inputLabels, inputs, n);
+    evaluate(gc, extractedLabels, computedOutputMap, type);
+    mapOutputs(outputMap, computedOutputMap, outputVals, m);
+    check(inputs, outputReal, n);
+    for (j = 0; j < m; j++) {
+        if (outputVals[j] != outputReal[j]) {
+            fprintf(stderr, "Check failed %u\n", j);
+        }
+    }
+
 	return 0;
 }

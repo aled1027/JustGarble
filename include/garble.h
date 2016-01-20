@@ -22,28 +22,9 @@
 
 #include "justGarble.h"
 
-#define DOUBLE(B) _mm_slli_epi64(B,1)
-
-#define FIXED_ZERO_GATE 0
-#define FIXED_ONE_GATE 15
-#define ANDGATE 8
-#define ORGATE 14
-#define XORGATE 6
-#define NOTGATE 5
-#define NO_GATE -1
-
-#define XOR_ID -2
-#define NOT_ID -3
-
-int
-createNewGate(Gate *gate, Wire *input0, Wire *input1, Wire *output, int type);
 int
 createNewWire(Wire *in, GarblingContext *garblingContext, int id);
 int
 getNextWire(GarblingContext *garblingContext);
-void
-removeGarbledCircuit(GarbledCircuit *garbledCircuit);
-void
-removeGarblingContext(GarblingContext *gctxt);
 
 #endif

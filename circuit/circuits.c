@@ -17,6 +17,7 @@
 */
 
 #include "justGarble.h"
+#include "garble.h"
 #include "gates.h"
 #include "circuits.h"
 
