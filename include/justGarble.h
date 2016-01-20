@@ -45,12 +45,11 @@ typedef struct {
 } GarbledTable;
 
 typedef struct {
-	int n, m, q, r;
+	int n, m, q, r, nFixedWires;
 	GarbledGate *garbledGates;  /* q */
 	GarbledTable *garbledTable; /* q */
 	Wire *wires;                /* r */
-    FixedWire *fixedWires;
-    int nFixedWires;
+    FixedWire *fixedWires;      /* nFixedWires */
 	int *outputs;               /* m */
 	block globalKey;
 } GarbledCircuit;
@@ -72,9 +71,6 @@ typedef struct {
 #define XORGATE 6
 #define NOTGATE 5
 #define NO_GATE -1
-
-#define XOR_ID -2
-#define NOT_ID -3
 
 void
 seedRandom(void);
