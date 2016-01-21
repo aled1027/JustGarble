@@ -124,6 +124,6 @@ NOTGate(GarbledCircuit *gc, GarblingContext *ctxt,
 		int input0, int output)
 {
 	int vals[] = { 1, 0, 1, 0 };
-	return genericGate(gc, ctxt, 0, input0, output, vals, NOTGATE);
+	return genericGate(gc, ctxt, input0, input0, output, vals, NOTGATE);
 }
 
