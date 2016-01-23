@@ -8,6 +8,12 @@
 size_t
 garbledCircuitSize(const GarbledCircuit *gc);
 
+void
+saveGarbledCircuit(const GarbledCircuit *gc, FILE *f);
+
+void
+loadGarbledCircuit(GarbledCircuit *gc, FILE *f, bool isGarbler);
+
 size_t
 copyGarbledCircuitToBuffer(const GarbledCircuit *gc, char *buffer);
 

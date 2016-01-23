@@ -18,6 +18,50 @@ garbledCircuitSize(const GarbledCircuit *gc)
     return size;
 }
 
+void
+saveGarbledCircuit(const GarbledCircuit *gc, FILE *f)
+{
+    fwrite(&gc->n, sizeof gc->n, 1, f);
+    fwrite(&gc->m, sizeof gc->m, 1, f);
+    fwrite(&gc->q, sizeof gc->q, 1, f);
+    fwrite(&gc->r, sizeof gc->r, 1, f);
+    fwrite(&gc->nFixedWires, sizeof gc->nFixedWires, 1, f);
+    fwrite(gc->garbledGates, sizeof(GarbledGate), gc->q, f);
+    fwrite(gc->garbledTable, sizeof(GarbledTable), gc->q, f);
+    if (gc->wires) {
+        fwrite(gc->wires, sizeof(Wire), gc->r, f);
+    }
+    fwrite(gc->fixedWires, sizeof(FixedWire), gc->nFixedWires, f);
+    fwrite(gc->outputs, sizeof(int), gc->m, f);
+    fwrite(&gc->globalKey, sizeof(block), 1, f);
+}
+
+void
+loadGarbledCircuit(GarbledCircuit *gc, FILE *f, bool isGarbler)
+{
+    fread(&gc->n, sizeof gc->n, 1, f);
+    fread(&gc->m, sizeof gc->m, 1, f);
+    fread(&gc->q, sizeof gc->q, 1, f);
+    fread(&gc->r, sizeof gc->r, 1, f);
+    fread(&gc->nFixedWires, sizeof gc->nFixedWires, 1, f);
+    gc->garbledGates = calloc(gc->q, sizeof(GarbledGate));
+    fread(gc->garbledGates, sizeof(GarbledGate), gc->q, f);
+    gc->garbledTable = calloc(gc->q, sizeof(GarbledTable));
+    fread(gc->garbledTable, sizeof(GarbledTable), gc->q, f);
+    if (isGarbler) {
+        gc->wires = calloc(gc->r, sizeof(Wire));
+        fread(gc->wires, sizeof(Wire), gc->r, f);
+    } else {
+        gc->wires = NULL;
+    }
+    gc->fixedWires = calloc(gc->nFixedWires, sizeof(FixedWire));
+    fread(gc->fixedWires, sizeof(FixedWire), gc->nFixedWires, f);
+    gc->outputs = calloc(gc->m, sizeof(int));
+    fread(gc->outputs, sizeof(int), gc->m, f);
+    fread(&gc->globalKey, sizeof(block), 1, f);
+}
+
+
 size_t
 copyGarbledCircuitToBuffer(const GarbledCircuit *gc, char *buffer)
 {
