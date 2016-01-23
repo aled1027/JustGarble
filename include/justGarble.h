@@ -49,7 +49,7 @@ typedef struct {
 	GarbledGate *garbledGates;  /* q */
 	GarbledTable *garbledTable; /* q */
 	Wire *wires;                /* r */
-    FixedWire *fixedWires;      /* nFixedWires */
+    FixedWire *fixedWires;      /* r */
 	int *outputs;               /* m */
 	block globalKey;
 } GarbledCircuit;
@@ -72,8 +72,8 @@ typedef struct {
 #define NOTGATE 5
 #define NO_GATE -1
 
-void
-seedRandom(void);
+block
+seedRandom(block *seed);
 
 /*
  * The following are the functions involved in creating, garbling, and 
@@ -98,7 +98,7 @@ finishBuilding(GarbledCircuit *gc, GarblingContext *ctxt,
 // Create memory for an empty circuit of the specified size.
 int
 createEmptyGarbledCircuit(GarbledCircuit *gc, int n, int m, int q, int r,
-                          block *inputLabels);
+                          const block *inputLabels);
 void
 removeGarbledCircuit(GarbledCircuit *gc);
 
@@ -121,12 +121,15 @@ createInputLabelsWithR(block *inputLabels, int n, block R);
 //The inputLabels field is expected to contain 2n fresh input labels, obtained
 //by calling createInputLabels. The outputMap is expected to be a 2m-block sized
 //empty array.
-int
-garbleCircuit(GarbledCircuit *gc, block *inputLabels,
-              block *outputMap, GarbleType type);
+void
+garbleCircuit(GarbledCircuit *gc, block *outputMap, GarbleType type);
 unsigned long
-timedGarble(GarbledCircuit *gc, block *inputLabels, block *outputMap,
-            GarbleType type);
+timedGarble(GarbledCircuit *gc, block *outputMap, GarbleType type);
+void
+hashGarbledCircuit(GarbledCircuit *gc, unsigned char *hash, GarbleType type);
+int
+checkGarbledCircuit(GarbledCircuit *gc, const unsigned char *hash,
+                    GarbleType type);
 
 void
 extractLabels(block *extractedLabels, const block *labels, const int *bits,
@@ -149,6 +152,7 @@ writeCircuitToFile(GarbledCircuit *gc, char *fileName);
 int
 readCircuitFromFile(GarbledCircuit *gc, char *fileName);
 
+#include "gc.h"
 #include "util.h"
 
 #endif

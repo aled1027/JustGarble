@@ -195,7 +195,6 @@ mapOutputs(const block *outputLabels, const block *outputMap, int *vals, int m)
         } else if (blockEqual(outputMap[i], outputLabels[2 * i + 1])) {
 			vals[i] = 1;
 		} else {
-            printf("MAP FAILED %d\n", i);
             return FAILURE;
         }
 	}
@@ -208,7 +207,7 @@ timedEval(const GarbledCircuit *gc, const block *inputLabels, GarbleType type)
     block extractedLabels[gc->n];
 	block outputMap[gc->m];
 	int inputs[gc->n];
-	unsigned long start;
+	unsigned long start, end;
 
 	for (int i = 0; i < gc->n; ++i) {
 		inputs[i] = rand() % 2;
@@ -217,5 +216,6 @@ timedEval(const GarbledCircuit *gc, const block *inputLabels, GarbleType type)
 	start = RDTSC;
     extractLabels(extractedLabels, inputLabels, inputs, gc->n);
 	evaluate(gc, extractedLabels, outputMap, type);
-    return RDTSC - start;
+    end = RDTSC;
+    return end - start;
 }

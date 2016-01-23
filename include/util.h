@@ -91,5 +91,7 @@ AES_KEY __rand_aes_key;
 
 block *
 allocate_blocks(size_t nblocks);
+void
+print_block(block blk);
 
-#endif /* UTIL_H_ */
+#endif

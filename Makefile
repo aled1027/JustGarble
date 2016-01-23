@@ -4,7 +4,7 @@
 
 CC=gcc
 INCLUDES = -Iinclude
-CFLAGS=-O3 -Wall -lm -lrt -lpthread -maes -msse4 -lmsgpack -march=native $(INCLUDES)
+CFLAGS=-O3 -Wall -maes -msse4 -lmsgpack -lcrypto -lssl -march=native $(INCLUDES)
 
 SRCDIR   = src
 SOURCES := $(wildcard $(SRCDIR)/*.c)
@@ -16,11 +16,6 @@ BINDIR   = bin
 
 SRCOBJS = $(SOURCES:.c=.o)
 CIRCOBJS = $(CIRCUITS:.c=.o)
-# SRCOBJS = $(SRCDIR)/*.o
-# CIRCOBJS = $(CIRCDIR)/*.o
-
-$(info ${SRCOBJS})
-$(info ${CIRCOBJS})
 
 AND = ANDTest
 AES = AESFullTest

@@ -52,10 +52,10 @@ test(int n, int nlayers, int times, GarbleType type)
     double timeGarbleMedians[times];
     double timeEvalMedians[times];
 
-    seedRandom();
+    (void) seedRandom(NULL);
 
     buildCircuit(&gc, n, nlayers);
-    (void) garbleCircuit(&gc, inputLabels, outputLabels, type);
+    (void) garbleCircuit(&gc, outputLabels, type);
     {
         block computedOutputMap[gc.n];
         int inputs[gc.n];
@@ -79,7 +79,7 @@ test(int n, int nlayers, int times, GarbleType type)
 
     for (int i = 0; i < times; ++i) {
         for (int j = 0; j < times; ++j) {
-            timeGarble[j] = timedGarble(&gc, inputLabels, outputLabels, type);
+            timeGarble[j] = timedGarble(&gc, outputLabels, type);
             timeEval[j] = timedEval(&gc, inputLabels, type);
         }
         timeGarbleMedians[i] = ((double) median(timeGarble, times)) / gc.q;

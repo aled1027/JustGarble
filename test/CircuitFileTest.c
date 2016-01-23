@@ -79,7 +79,7 @@ main(int argc, char **argv)
 	readCircuitFromFile(&garbledCircuit2, "tst.scd");
 
 	//Actually garble the circuit created from the file.
-	garbleCircuit(&garbledCircuit2, inputLabels, outputMap, type);
+	garbleCircuit(&garbledCircuit2, outputMap, type);
 
 	//Evaluate the circuit with random values and check the computed
 	//values match the outputs of the desired function.

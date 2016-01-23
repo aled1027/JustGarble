@@ -77,7 +77,7 @@ main(int argc, char **argv)
 	finishBuilding(&garbledCircuit, &garblingContext, outputMap, outputs);
 
 	//Garble the built circuit.
-	garbleCircuit(&garbledCircuit, inputLabels, outputMap, type);
+	garbleCircuit(&garbledCircuit, outputMap, type);
 
 	//Evaluate the circuit with random values and check the computed
 	//values match the outputs of the desired function.

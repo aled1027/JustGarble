@@ -16,14 +16,12 @@
 
 */
 
+#include "justGarble.h"
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
-
-#include "justGarble.h"
-
-/* static __m128i cur_seed; */
 
 int
 countToN(int *a, int n)
@@ -70,19 +68,18 @@ doubleMean(double *values, int n)
 
 // This is only for testing and benchmark purposes. Use a more 
 // secure seeding mechanism for actual use.
-int already_initialized = 0;
-void
-seedRandom(void)
+block
+seedRandom(block *seed)
 {
-    if (!already_initialized) {
-        block cur_seed;
-        already_initialized = 1;
-        __current_rand_index = zero_block();
-        srand(time(NULL));
-        cur_seed = _mm_set_epi32(rand(), rand(), rand(), rand());
-        AES_set_encrypt_key((unsigned char *) &cur_seed, 128, &__rand_aes_key);
-    }
+    block cur_seed;
+
+    srand(time(NULL));
+    __current_rand_index = zero_block();
+    cur_seed = seed ? *seed : _mm_set_epi32(rand(), rand(), rand(), rand());
+    AES_set_encrypt_key((unsigned char *) &cur_seed, 128, &__rand_aes_key);
+    return cur_seed;
 }
+
 
 block
 randomBlock(void)
@@ -104,4 +101,11 @@ allocate_blocks(size_t nblocks)
     } else {
         return blks;
     }
+}
+
+void
+print_block(block blk)
+{
+    uint64_t *val = (uint64_t *) &blk;
+    printf("%016lx%016lx", val[1], val[0]);
 }
